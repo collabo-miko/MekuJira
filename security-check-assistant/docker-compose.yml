@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PAGEINDEX_API_KEY=${PAGEINDEX_API_KEY:-}
+      - DATA_DIR=/app/data
+      - DOCUMENTS_DIR=/app/data/documents
+      - UPLOADS_DIR=/app/data/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://backend:8000
+    restart: unless-stopped
