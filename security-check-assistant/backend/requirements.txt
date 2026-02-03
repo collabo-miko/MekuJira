@@ -9,3 +9,8 @@ pydantic-settings>=2.1.0
 pytest>=7.4.0
 pytest-asyncio>=0.23.0
 pytest-cov>=4.1.0
+
+# PageIndex self-hosted dependencies
+openai>=1.0.0
+tiktoken>=0.5.0
+PyMuPDF>=1.23.0

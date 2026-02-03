@@ -96,20 +96,66 @@ docker-compose up -d
 | やや厳格 | 0.85 | 意図が明確に一致 |
 | 標準（デフォルト） | 0.70 | ある程度の類似性 |
 
-## PageIndex設定
+## PageIndex設定（セルフホスト版）
 
-### APIキーの取得
+セルフホスト版PageIndexを使用してPDFドキュメントのインデックス化・検索を行います。
+PageIndex APIの料金は不要ですが、OpenAI API費用が発生します。
 
-1. [PageIndex Dashboard](https://dash.pageindex.ai) にアクセス
-2. アカウントを作成またはログイン
-3. 「APIキーを生成」をクリック
-4. 生成されたキーを `.env` ファイルに設定:
+### 前提条件
+
+- OpenAI APIキー（GPT-4アクセス推奨、GPT-4o-miniでも動作可能）
+
+### セットアップ
+
+#### 1. PageIndexを取得
+
+```bash
+cd security-check-assistant
+git clone https://github.com/VectifyAI/PageIndex.git pageindex
+```
+
+#### 2. PageIndex依存関係をインストール
+
+```bash
+cd pageindex
+pip install -r requirements.txt
+cd ..
+```
+
+#### 3. 環境変数を設定
+
+`.env` ファイルに以下を設定:
+
+```bash
+# 必須: OpenAI APIキー
+OPENAI_API_KEY=sk-your-key-here
+
+# オプション: 使用するモデル（デフォルト: gpt-4o-2024-11-20）
+PAGEINDEX_MODEL=gpt-4o-2024-11-20
+
+# オプション: ツリー生成パラメータ
+PAGEINDEX_MAX_PAGES_PER_NODE=10
+PAGEINDEX_MAX_TOKENS_PER_NODE=20000
+```
+
+### OpenAI API料金について
+
+| モデル | 入力 | 出力 |
+|--------|------|------|
+| GPT-4o | $2.50/1M tokens | $10.00/1M tokens |
+| GPT-4o-mini | $0.15/1M tokens | $0.60/1M tokens |
+
+セルフホスト版ではPageIndex APIの料金は不要ですが、OpenAI API費用が発生します。
+コスト最適化にはGPT-4o-miniの使用も検討してください。
+
+### クラウド版PageIndexを使用する場合（オプション）
+
+クラウド版PageIndex APIを使用する場合は以下を設定:
 
 ```bash
 PAGEINDEX_API_KEY=your_api_key_here
+PAGEINDEX_USE_CLOUD=true
 ```
-
-### 料金について
 
 | サービス | 単価 | 無料枠 |
 |---------|------|--------|
@@ -117,7 +163,7 @@ PAGEINDEX_API_KEY=your_api_key_here
 | Chat API | $0.02/クエリ | 100クエリ |
 | OCR | $0.01/ページ | 200ページ |
 
-無料枠で十分な試用が可能です。詳細は [PageIndex Pricing](https://pageindex.ai/pricing) をご参照ください。
+詳細は [PageIndex Dashboard](https://dash.pageindex.ai) をご参照ください。
 
 ## データインポート
 

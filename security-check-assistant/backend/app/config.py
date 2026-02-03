@@ -7,8 +7,17 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # API Keys
+    # OpenAI API Key (required for self-hosted PageIndex)
+    openai_api_key: str = ""
+
+    # PageIndex settings (self-hosted)
+    pageindex_model: str = "gpt-4o-2024-11-20"
+    pageindex_max_pages_per_node: int = 10
+    pageindex_max_tokens_per_node: int = 20000
+
+    # PageIndex cloud API (optional, for backward compatibility)
     pageindex_api_key: str = ""
+    pageindex_use_cloud: bool = False
 
     # Confidence thresholds
     confidence_strict: float = 0.95
