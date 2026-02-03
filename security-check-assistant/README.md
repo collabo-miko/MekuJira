@@ -96,6 +96,137 @@ docker-compose up -d
 | やや厳格 | 0.85 | 意図が明確に一致 |
 | 標準（デフォルト） | 0.70 | ある程度の類似性 |
 
+## PageIndex設定
+
+### APIキーの取得
+
+1. [PageIndex Dashboard](https://dash.pageindex.ai) にアクセス
+2. アカウントを作成またはログイン
+3. 「APIキーを生成」をクリック
+4. 生成されたキーを `.env` ファイルに設定:
+
+```bash
+PAGEINDEX_API_KEY=your_api_key_here
+```
+
+### 料金について
+
+| サービス | 単価 | 無料枠 |
+|---------|------|--------|
+| Tree Generation | $0.01/ページ | 200ページ |
+| Chat API | $0.02/クエリ | 100クエリ |
+| OCR | $0.01/ページ | 200ページ |
+
+無料枠で十分な試用が可能です。詳細は [PageIndex Pricing](https://pageindex.ai/pricing) をご参照ください。
+
+## データインポート
+
+### kintoneからのCSVエクスポート
+
+過去の回答データをkintoneからインポートする場合:
+
+1. kintoneアプリを開く
+2. 「...」→「ファイルに書き出す」→「CSV」を選択
+3. 必要なフィールドを選択してエクスポート
+
+### CSVインポート手順
+
+1. CSVファイルを `data/imports/` ディレクトリに配置
+2. インポートスクリプトを実行:
+
+```bash
+cd backend
+python -m app.scripts.import_knowledge data/imports/knowledge.csv
+```
+
+### CSVフォーマット
+
+| カラム | 説明 | 必須 |
+|--------|------|------|
+| question_text | 質問文 | ✓ |
+| answer_text | 回答文 | ✓ |
+| vendor_name | ベンダー名 | |
+| source_document | 参照元 | |
+| created_at | 回答日時（YYYY-MM-DD形式） | |
+
+**サンプルCSV:**
+
+```csv
+question_text,answer_text,vendor_name,source_document,created_at
+"パスワードポリシーについて教えてください","8文字以上、英数字記号を含む必要があります","ベンダーA","セキュリティポリシー.pdf",2024-01-15
+```
+
+## トラブルシューティング
+
+### よくあるエラー
+
+#### PageIndex APIエラー
+
+**401 Unauthorized**
+- APIキーが未設定または無効です
+- `.env` の `PAGEINDEX_API_KEY` を確認してください
+- APIキーが正しくコピーされているか確認
+
+**429 Too Many Requests**
+- レート制限に達しました
+- しばらく待ってから再試行してください
+
+**500 Internal Server Error**
+- PageIndexサーバー側の問題の可能性があります
+- しばらく待ってから再試行するか、[PageIndex Status](https://status.pageindex.ai) を確認
+
+#### Excelアップロードエラー
+
+**Unsupported format**
+- `.xls` ファイルは非対応です
+- `.xlsx` 形式で保存し直してからアップロードしてください
+
+**フォーマット検出失敗**
+- シートの構造が複雑すぎる場合に発生します
+- 対処法:
+  - ヘッダー行を1行目に配置
+  - 結合セルを解除
+  - シンプルな構造に整理
+
+**ファイルサイズ超過**
+- 最大10MBまでのファイルに対応しています
+- 大きいファイルは分割してアップロードしてください
+
+#### データベースエラー
+
+**Database is locked**
+- 複数のプロセスが同時にアクセスしている可能性があります
+- アプリケーションを再起動してください
+
+#### フロントエンドエラー
+
+**API Connection Failed**
+- バックエンドが起動しているか確認してください
+- `http://localhost:8000/health` にアクセスして状態を確認
+- CORS設定を確認（`.env` の `CORS_ORIGINS`）
+
+### ログの確認
+
+```bash
+# Dockerの場合
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# ローカル実行の場合
+# バックエンドのログはコンソールに出力されます
+```
+
+### データベースのリセット
+
+問題が解決しない場合、データベースをリセットできます:
+
+```bash
+# バックアップを取ってから実行
+cp data/knowledge.db data/knowledge.db.backup
+rm data/knowledge.db
+# アプリケーション再起動で新規作成されます
+```
+
 ## ライセンス
 
 プロプライエタリ
