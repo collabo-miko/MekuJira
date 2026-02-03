@@ -15,9 +15,9 @@ Reviewed backend and frontend code for security, quality, maintainability, tests
 3. **Confidence threshold validation (backend)**
    - Added bounds validation (`0.0`–`1.0`) for the upload form and generation request.
 
-4. **Frontend confidence threshold edge case (recommendation)**
-   - Frontend currently skips sending `confidence_threshold` when the value is `0`.
-   - Consider sending explicitly when the value is `0`.
+4. **Confidence threshold not sent when value is `0` (frontend)**
+   - Frontend skipped sending `confidence_threshold` when value was `0`.
+   - Now sends when the value is explicitly `0`.
 
 ## Remaining Findings / Recommendations
 1. **File size limits**
