@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 
 from app.config import get_settings
+from app.core.file_utils import sanitize_filename
 from app.core.pageindex_client import get_pageindex_client
 from app.db.repositories.document_repository import DocumentRepository
 from app.models.document import Document, DocumentStatus, DocumentResponse
@@ -26,23 +27,33 @@ async def upload_document(
     settings = get_settings()
 
     # Validate file type
-    if not file.filename or not file.filename.endswith(".pdf"):
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail="Invalid file type. Only PDF files are supported.",
         )
 
+    try:
+        safe_filename = sanitize_filename(file.filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     # Save the file
     docs_dir = Path(settings.documents_dir)
     docs_dir.mkdir(parents=True, exist_ok=True)
 
-    file_path = docs_dir / file.filename
+    file_path = docs_dir / safe_filename
+    if file_path.exists():
+        raise HTTPException(
+            status_code=409,
+            detail="A file with the same name already exists.",
+        )
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     # Create document record
     document = Document(
-        filename=file.filename,
+        filename=safe_filename,
         file_path=str(file_path),
         status=DocumentStatus.UPLOADING,
     )

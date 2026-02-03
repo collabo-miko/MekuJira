@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, BackgroundTasks
 
 from app.config import get_settings
+from app.core.file_utils import sanitize_filename
 from app.core.excel_parser import ExcelParser
 from app.core.format_detector import FormatDetector
 from app.db.repositories.session_repository import SessionRepository
@@ -30,23 +31,39 @@ async def upload_excel(
     settings = get_settings()
 
     # Validate file type
-    if not file.filename or not file.filename.endswith((".xlsx", ".xls")):
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
         raise HTTPException(
             status_code=400,
-            detail="Invalid file type. Only .xlsx and .xls files are supported.",
+            detail="Invalid file type. Only .xlsx files are supported.",
         )
+
+    if confidence_threshold < 0.0 or confidence_threshold > 1.0:
+        raise HTTPException(
+            status_code=400,
+            detail="confidence_threshold must be between 0.0 and 1.0",
+        )
+
+    try:
+        safe_filename = sanitize_filename(file.filename)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Save the file
     upload_dir = Path(settings.uploads_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    file_path = upload_dir / file.filename
+    file_path = upload_dir / safe_filename
+    if file_path.exists():
+        raise HTTPException(
+            status_code=409,
+            detail="A file with the same name already exists.",
+        )
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     # Create session
     session = Session(
-        filename=file.filename,
+        filename=safe_filename,
         vendor_name=vendor_name,
         confidence_threshold=confidence_threshold,
         status=SessionStatus.UPLOADED,

@@ -1,7 +1,7 @@
 """Answer generation API routes."""
-from typing import Optional
+from typing import Optional, Annotated
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.answer_engine import AnswerEngine
 from app.db.repositories.session_repository import SessionRepository
@@ -18,7 +18,7 @@ class GenerateRequest(BaseModel):
     """Request body for answer generation."""
 
     session_id: str
-    confidence_threshold: Optional[float] = None
+    confidence_threshold: Optional[Annotated[float, Field(ge=0.0, le=1.0)]] = None
 
 
 class GenerateResponse(BaseModel):
@@ -56,7 +56,16 @@ async def generate_answers(
     )
 
     # Start background generation
-    confidence_threshold = request.confidence_threshold or session.confidence_threshold
+    confidence_threshold = (
+        request.confidence_threshold
+        if request.confidence_threshold is not None
+        else session.confidence_threshold
+    )
+    if confidence_threshold < 0.0 or confidence_threshold > 1.0:
+        raise HTTPException(
+            status_code=400,
+            detail="confidence_threshold must be between 0.0 and 1.0",
+        )
     background_tasks.add_task(
         generate_answers_task,
         session_id=request.session_id,
