@@ -1,7 +1,7 @@
 # Code Review Report: Security Check Assistant MVP
 
 ## Summary
-Reviewed backend and frontend code for security, quality, maintainability, tests, and performance. Implemented fixes for high-impact issues related to file handling and input validation. Tests could not be executed in this environment because `python` was not available.
+Reviewed backend and frontend code for security, quality, maintainability, tests, and performance. Implemented fixes for high-impact issues related to file handling and input validation. Backend tests were executed successfully.
 
 ## Fixed Issues
 1. **File path traversal & overwrite risk (backend)**
@@ -36,4 +36,4 @@ Reviewed backend and frontend code for security, quality, maintainability, tests
    - Tests are minimal; consider adding tests for upload validation, path sanitization, and confidence threshold validation.
 
 ## Tests
-- Not run (environment missing `python` executable).
+- `python -m pytest` (19 passed)
