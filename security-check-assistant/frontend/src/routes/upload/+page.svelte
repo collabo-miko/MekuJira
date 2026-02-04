@@ -2,11 +2,14 @@
 	import { goto } from '$app/navigation';
 	import { uploadExcel, generateAnswers } from '$lib/api/client';
 	import FileUpload from '$lib/components/FileUpload.svelte';
+	import ExcelPreview from '$lib/components/ExcelPreview.svelte';
 
 	let uploading = false;
 	let error: string | null = null;
 	let vendorName = '';
 	let confidenceThreshold = 0.7;
+	let selectedFile: File | null = null;
+	let showPreview = false;
 
 	const thresholdOptions = [
 		{ value: 0.95, label: '厳格 (95%)' },
@@ -14,10 +17,29 @@
 		{ value: 0.7, label: '標準 (70%)' }
 	];
 
-	async function handleFileUpload(event: CustomEvent<File>) {
+	function handleFileSelect(event: CustomEvent<File>) {
 		const file = event.detail;
 		if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
 			error = 'Excelファイル（.xlsx, .xls）のみアップロード可能です';
+			selectedFile = null;
+			showPreview = false;
+			return;
+		}
+
+		error = null;
+		selectedFile = file;
+		showPreview = true;
+	}
+
+	function clearFile() {
+		selectedFile = null;
+		showPreview = false;
+		error = null;
+	}
+
+	async function handleUpload() {
+		if (!selectedFile) {
+			error = 'ファイルを選択してください';
 			return;
 		}
 
@@ -26,7 +48,7 @@
 			error = null;
 
 			// Upload and create session
-			const session = await uploadExcel(file, vendorName || undefined, confidenceThreshold);
+			const session = await uploadExcel(selectedFile, vendorName || undefined, confidenceThreshold);
 
 			// Wait a bit for format detection to complete
 			await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -47,7 +69,7 @@
 	<title>Excelアップロード - Security Check Assistant</title>
 </svelte:head>
 
-<div class="px-4 sm:px-0 max-w-2xl mx-auto">
+<div class="px-4 sm:px-0 max-w-4xl mx-auto">
 	<h1 class="text-2xl font-bold text-gray-900 mb-6">セキュリティチェックシートをアップロード</h1>
 
 	<div class="bg-white shadow rounded-lg p-6">
@@ -91,24 +113,58 @@
 				</p>
 			</div>
 
-			<div>
-				<label class="block text-sm font-medium text-gray-700 mb-2">
-					Excelファイル
-				</label>
-				<FileUpload
-					accept=".xlsx,.xls"
-					label="セキュリティチェックシート（Excel）をドラッグ＆ドロップ"
-					disabled={uploading}
-					on:file={handleFileUpload}
-				/>
-			</div>
+			{#if !showPreview}
+				<div>
+					<span class="block text-sm font-medium text-gray-700 mb-2">Excelファイル</span>
+					<FileUpload
+						accept=".xlsx,.xls"
+						label="セキュリティチェックシート（Excel）をドラッグ＆ドロップ"
+						disabled={uploading}
+						on:file={handleFileSelect}
+					/>
+				</div>
+			{:else if selectedFile}
+				<div>
+					<div class="flex items-center justify-between mb-2">
+						<span class="block text-sm font-medium text-gray-700">
+							ファイルプレビュー: {selectedFile.name}
+						</span>
+						<button
+							type="button"
+							class="text-sm text-gray-500 hover:text-gray-700"
+							on:click={clearFile}
+							disabled={uploading}
+						>
+							✕ 別のファイルを選択
+						</button>
+					</div>
+					<ExcelPreview file={selectedFile} maxRows={50} />
+				</div>
+
+				<div class="flex gap-4">
+					<button
+						type="button"
+						class="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed font-medium"
+						on:click={handleUpload}
+						disabled={uploading}
+					>
+						{#if uploading}
+							<span class="inline-flex items-center">
+								<span
+									class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"
+								></span>
+								処理中...
+							</span>
+						{:else}
+							アップロードして回答生成を開始
+						{/if}
+					</button>
+				</div>
+			{/if}
 
 			{#if uploading}
 				<div class="text-center py-4">
-					<div
-						class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-					></div>
-					<p class="mt-2 text-gray-600">処理中... フォーマット検出と回答生成を行っています</p>
+					<p class="text-gray-600">フォーマット検出と回答生成を行っています...</p>
 				</div>
 			{/if}
 		</div>
@@ -117,7 +173,8 @@
 	<div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
 		<h3 class="font-medium text-blue-900 mb-2">処理の流れ</h3>
 		<ol class="list-decimal list-inside text-sm text-blue-800 space-y-1">
-			<li>Excelファイルをアップロード</li>
+			<li>Excelファイルを選択してプレビューを確認</li>
+			<li>「アップロードして回答生成を開始」をクリック</li>
 			<li>シート構造を自動検出（質問列・回答列を特定）</li>
 			<li>質問を抽出して一括回答生成</li>
 			<li>レビュー画面で確認・修正</li>
