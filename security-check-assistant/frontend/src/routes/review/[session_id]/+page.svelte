@@ -8,11 +8,13 @@
 		modifyAnswer,
 		finalizeSession,
 		getExportUrl,
+		getSessionFile,
 		type ReviewItem,
 		type ReviewResponse
 	} from '$lib/api/client';
 	import ConfidenceBadge from '$lib/components/ConfidenceBadge.svelte';
 	import StatusBadge from '$lib/components/StatusBadge.svelte';
+	import ExcelPreview from '$lib/components/ExcelPreview.svelte';
 
 	let review: ReviewResponse | null = null;
 	let loading = true;
@@ -21,6 +23,9 @@
 	let editText = '';
 	let expandedSources: Set<string> = new Set();
 	let pollInterval: number | null = null;
+	let activeTab: 'review' | 'preview' = 'review';
+	let excelFile: File | null = null;
+	let loadingExcel = false;
 
 	$: sessionId = $page.params.session_id;
 
@@ -132,6 +137,23 @@
 		window.location.href = getExportUrl(sessionId);
 	}
 
+	async function loadExcelFile() {
+		if (excelFile || loadingExcel) return;
+		loadingExcel = true;
+		try {
+			excelFile = await getSessionFile(sessionId);
+		} catch (e) {
+			console.error('Failed to load Excel file:', e);
+		} finally {
+			loadingExcel = false;
+		}
+	}
+
+	function switchToPreviewTab() {
+		activeTab = 'preview';
+		loadExcelFile();
+	}
+
 	$: approvedCount = review?.items.filter(
 		(i) => i.status === 'approved' || i.status === 'modified'
 	).length ?? 0;
@@ -206,8 +228,49 @@
 			</div>
 		</div>
 
-		<!-- Review Items -->
-		<div class="space-y-4">
+		<!-- Tabs -->
+		<div class="border-b border-gray-200 mb-6">
+			<nav class="-mb-px flex space-x-8">
+				<button
+					type="button"
+					class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'review'
+						? 'border-blue-500 text-blue-600'
+						: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+					on:click={() => (activeTab = 'review')}
+				>
+					回答レビュー
+				</button>
+				<button
+					type="button"
+					class="py-2 px-1 border-b-2 font-medium text-sm {activeTab === 'preview'
+						? 'border-blue-500 text-blue-600'
+						: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+					on:click={switchToPreviewTab}
+				>
+					Excelプレビュー
+				</button>
+			</nav>
+		</div>
+
+		{#if activeTab === 'preview'}
+			<!-- Excel Preview Tab -->
+			<div class="bg-white shadow rounded-lg p-4">
+				{#if loadingExcel}
+					<div class="flex items-center justify-center py-8">
+						<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+						<span class="ml-2 text-gray-600">Excelファイルを読み込み中...</span>
+					</div>
+				{:else if excelFile}
+					<ExcelPreview file={excelFile} maxRows={100} />
+				{:else}
+					<div class="text-gray-500 text-center py-8">
+						Excelファイルを読み込めませんでした
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<!-- Review Items Tab -->
+			<div class="space-y-4">
 			{#each review.items as item}
 				<div
 					class="bg-white shadow rounded-lg overflow-hidden border-l-4
@@ -312,6 +375,7 @@
 					</div>
 				</div>
 			{/each}
-		</div>
+			</div>
+		{/if}
 	{/if}
 </div>

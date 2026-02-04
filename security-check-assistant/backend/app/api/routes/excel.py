@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form, BackgroundTasks
+from fastapi.responses import FileResponse
 
 from app.config import get_settings
 from app.core.file_utils import sanitize_filename
@@ -230,3 +231,23 @@ async def get_session_questions(session_id: str):
         )
         for q in questions
     ]
+
+
+@router.get("/sessions/{session_id}/file")
+async def get_session_file(session_id: str):
+    """Get the Excel file for a session (for preview purposes)."""
+    session = await SessionRepository.get_by_id(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    settings = get_settings()
+    file_path = Path(settings.uploads_dir) / session.filename
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(
+        path=file_path,
+        filename=session.filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )

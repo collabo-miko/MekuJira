@@ -267,3 +267,21 @@ export async function getReport(sessionId: string): Promise<Report> {
 export function getExportUrl(sessionId: string): string {
 	return `${API_BASE}/export/${sessionId}/excel`;
 }
+
+export async function getSessionFile(sessionId: string): Promise<File> {
+	const response = await fetch(`${API_BASE}/excel/sessions/${sessionId}/file`);
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+		throw new Error(error.detail || `HTTP ${response.status}`);
+	}
+	const blob = await response.blob();
+	const contentDisposition = response.headers.get('Content-Disposition');
+	let filename = 'download.xlsx';
+	if (contentDisposition) {
+		const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+		if (match) {
+			filename = match[1];
+		}
+	}
+	return new File([blob], filename, { type: blob.type });
+}
