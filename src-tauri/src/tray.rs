@@ -3,7 +3,6 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
-use tauri_plugin_positioner::{Position, WindowExt};
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let settings_item = MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
@@ -15,15 +14,15 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
-            let app = tray.app_handle();
-
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
+                position,
                 ..
             } = event
             {
-                toggle_popup(app);
+                let app = tray.app_handle();
+                toggle_popup(app, position);
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -40,12 +39,16 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn toggle_popup(app: &AppHandle) {
+fn toggle_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
     if let Some(window) = app.get_webview_window("popup") {
         if window.is_visible().unwrap_or(false) {
             let _ = window.hide();
         } else {
-            let _ = window.move_window(Position::TrayBottomCenter);
+            // Position popup below the tray icon, centered horizontally
+            let window_width = 380.0_f64;
+            let x = tray_position.x - (window_width / 2.0);
+            let y = tray_position.y;
+            let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
             let _ = window.show();
             let _ = window.set_focus();
         }

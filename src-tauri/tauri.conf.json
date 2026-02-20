@@ -36,6 +36,7 @@
         "skipTaskbar": true
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     },
