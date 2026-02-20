@@ -5,29 +5,39 @@
   }
   let { status, category }: Props = $props();
 
-  const categoryColors: Record<string, { bg: string; text: string }> = {
-    new: { bg: "#e3f2fd", text: "#1565c0" },
-    indeterminate: { bg: "#fff3e0", text: "#e65100" },
-    done: { bg: "#e8f5e9", text: "#2e7d32" },
+  const categoryStyles: Record<string, { bg: string; text: string; dot: string }> = {
+    new: { bg: "#f0f4ff", text: "#3b5998", dot: "#4a90d9" },
+    indeterminate: { bg: "#fff8f0", text: "#b45309", dot: "#f59e0b" },
+    done: { bg: "#f0fdf4", text: "#15803d", dot: "#22c55e" },
   };
 
-  let colors = $derived(categoryColors[category] ?? { bg: "#f5f5f5", text: "#616161" });
+  let style = $derived(categoryStyles[category] ?? { bg: "#f5f5f5", text: "#6e6e73", dot: "#aeaeb2" });
 </script>
 
 <span
   class="badge"
-  style="background-color: {colors.bg}; color: {colors.text};"
+  style="background: {style.bg}; color: {style.text};"
 >
+  <span class="dot" style="background: {style.dot};"></span>
   {status}
 </span>
 
 <style>
   .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px 2px 6px;
+    border-radius: 100px;
     font-size: 11px;
     font-weight: 500;
     white-space: nowrap;
+    letter-spacing: 0;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 </style>

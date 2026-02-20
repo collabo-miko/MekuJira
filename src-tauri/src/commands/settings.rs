@@ -29,8 +29,5 @@ pub async fn save_api_token(token: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn has_api_token() -> Result<bool, String> {
-    match keychain::get_api_token() {
-        Ok(_) => Ok(true),
-        Err(_) => Ok(false),
-    }
+    Ok(keychain::has_api_token())
 }

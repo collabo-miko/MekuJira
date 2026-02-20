@@ -13,8 +13,12 @@
 <div class="issue-list">
   {#if issues.length === 0}
     <div class="empty">
-      <p>課題が見つかりません</p>
-      <p class="hint">フィルターを変更するか、JQL設定を確認してください</p>
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d1d6" stroke-width="1.5">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+        <rect x="9" y="3" width="6" height="4" rx="1"/>
+      </svg>
+      <p class="empty-title">課題が見つかりません</p>
+      <p class="empty-hint">フィルターを変更するか、JQL設定を確認してください</p>
     </div>
   {:else}
     {#each issues as issue (issue.key)}
@@ -37,15 +41,16 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px 20px;
-    color: #888;
+    padding: 48px 24px;
+    gap: 8px;
   }
-  .empty p {
-    margin: 4px 0;
+  .empty-title {
     font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
   }
-  .hint {
-    font-size: 12px !important;
-    color: #aaa;
+  .empty-hint {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
   }
 </style>

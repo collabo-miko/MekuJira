@@ -51,7 +51,6 @@
     isTesting = true;
     testResult = null;
     try {
-      // Save current form values first so test_connection can read them
       if (apiToken) {
         await saveApiToken(apiToken);
         hasTokenState = true;
@@ -90,12 +89,14 @@
 </script>
 
 <div class="settings">
-  <h1>JIRA Focus 設定</h1>
+  <header class="page-header">
+    <h1>設定</h1>
+  </header>
 
   <section>
-    <h2>JIRA接続設定</h2>
+    <h2>JIRA接続</h2>
     <div class="form-group">
-      <label for="domain">JIRAドメイン</label>
+      <label for="domain">ドメイン</label>
       <input
         id="domain"
         type="text"
@@ -116,7 +117,7 @@
       <label for="token">
         APIトークン
         {#if hasTokenState}
-          <span class="token-saved">(保存済み)</span>
+          <span class="token-badge">保存済み</span>
         {/if}
       </label>
       <input
@@ -126,12 +127,12 @@
         placeholder={hasTokenState ? "新しいトークンで上書き" : "APIトークンを入力"}
       />
     </div>
-    <div class="button-row">
-      <button onclick={handleTest} disabled={isTesting}>
+    <div class="actions-row">
+      <button class="btn-secondary" onclick={handleTest} disabled={isTesting}>
         {isTesting ? "テスト中..." : "接続テスト"}
       </button>
       {#if testResult}
-        <span class={testResult.success ? "success" : "error-text"}>
+        <span class="result" class:success={testResult.success} class:error={!testResult.success}>
           {testResult.message}
         </span>
       {/if}
@@ -140,34 +141,42 @@
 
   <section>
     <h2>JQLフィルター</h2>
-    <div class="filter-list">
-      {#each settings.filters as filter (filter.id)}
-        <div class="filter-item">
-          <input
-            type="radio"
-            name="activeFilter"
-            checked={filter.is_active}
-            onchange={() => setActiveFilter(filter.id)}
-          />
-          <div class="filter-info">
-            <span class="filter-name">{filter.name}</span>
-            <code class="filter-jql">{filter.jql}</code>
+    {#if settings.filters.length > 0}
+      <div class="filter-list">
+        {#each settings.filters as filter (filter.id)}
+          <div class="filter-item" class:active={filter.is_active}>
+            <label class="filter-radio">
+              <input
+                type="radio"
+                name="activeFilter"
+                checked={filter.is_active}
+                onchange={() => setActiveFilter(filter.id)}
+              />
+              <div class="filter-info">
+                <span class="filter-name">{filter.name}</span>
+                <code class="filter-jql">{filter.jql}</code>
+              </div>
+            </label>
+            {#if filter.id !== "default"}
+              <button class="remove-btn" onclick={() => removeFilter(filter.id)} title="削除">
+                <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5" fill="none">
+                  <path d="M3 3l6 6M9 3l-6 6"/>
+                </svg>
+              </button>
+            {/if}
           </div>
-          {#if filter.id !== "default"}
-            <button class="remove-btn" onclick={() => removeFilter(filter.id)}>×</button>
-          {/if}
-        </div>
-      {/each}
-    </div>
+        {/each}
+      </div>
+    {/if}
     <div class="add-filter">
       <input type="text" bind:value={newFilterName} placeholder="フィルター名" />
       <input type="text" bind:value={newFilterJql} placeholder="JQLクエリ" />
-      <button onclick={addFilter}>追加</button>
+      <button class="btn-secondary" onclick={addFilter}>追加</button>
     </div>
   </section>
 
   <section>
-    <h2>一般設定</h2>
+    <h2>一般</h2>
     <div class="form-group">
       <label for="interval">ポーリング間隔（秒）</label>
       <input
@@ -179,13 +188,15 @@
       />
     </div>
     <div class="form-group checkbox">
-      <input id="autostart" type="checkbox" bind:checked={settings.auto_start} />
-      <label for="autostart">macOS起動時に自動起動</label>
+      <label class="toggle-label">
+        <input id="autostart" type="checkbox" bind:checked={settings.auto_start} />
+        <span>macOS起動時に自動起動</span>
+      </label>
     </div>
   </section>
 
   <div class="save-row">
-    <button class="save-btn" onclick={handleSave} disabled={isSaving}>
+    <button class="btn-primary" onclick={handleSave} disabled={isSaving}>
       {isSaving ? "保存中..." : "保存"}
     </button>
     {#if saveMessage}
@@ -197,35 +208,41 @@
 <style>
   .settings {
     padding: 24px;
-    max-width: 600px;
+    max-width: 560px;
     margin: 0 auto;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     overflow-y: auto;
     max-height: 100vh;
   }
+  .page-header {
+    margin-bottom: 28px;
+  }
   h1 {
-    font-size: 20px;
-    margin-bottom: 24px;
-    color: #333;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.02em;
   }
   h2 {
-    font-size: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6e6e73;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     margin-bottom: 12px;
-    color: #555;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 6px;
   }
   section {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
   }
   .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
   .form-group label {
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     font-size: 13px;
-    color: #666;
+    font-weight: 500;
+    color: #1d1d1f;
   }
   .form-group input[type="text"],
   .form-group input[type="email"],
@@ -233,49 +250,102 @@
   .form-group input[type="number"] {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
     font-size: 14px;
+    font-family: inherit;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .form-group input:focus {
+    border-color: #0071e3;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+  }
+  .form-group input::placeholder {
+    color: #aeaeb2;
   }
   .form-group.checkbox {
+    margin-top: 4px;
+  }
+  .toggle-label {
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1d1d1f;
   }
-  .form-group.checkbox label {
-    margin-bottom: 0;
+  .toggle-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #0071e3;
   }
-  .token-saved {
-    color: #2e7d32;
-    font-size: 11px;
+  .token-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #34c759;
+    background: #f0fdf4;
+    padding: 1px 6px;
+    border-radius: 100px;
+    margin-left: 6px;
+    vertical-align: middle;
   }
-  .button-row {
+  .actions-row {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
   }
-  button {
+  .btn-secondary {
     padding: 6px 16px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: #fff;
     cursor: pointer;
     font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    color: #1d1d1f;
+    transition: all 0.12s ease;
   }
-  button:hover:not(:disabled) {
-    background: #f5f5f5;
+  .btn-secondary:hover:not(:disabled) {
+    background: #f5f5f7;
   }
-  button:disabled {
-    opacity: 0.5;
+  .btn-secondary:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
   }
-  .success {
-    color: #2e7d32;
+  .btn-primary {
+    padding: 8px 28px;
+    border: none;
+    border-radius: 8px;
+    background: #0071e3;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.12s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #0077ed;
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .result {
     font-size: 13px;
   }
-  .error-text {
-    color: #c62828;
-    font-size: 13px;
+  .result.success {
+    color: #34c759;
+  }
+  .result.error {
+    color: #ff3b30;
   }
   .filter-list {
     margin-bottom: 12px;
@@ -284,10 +354,26 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    padding: 8px;
-    border: 1px solid #eee;
-    border-radius: 6px;
+    padding: 10px 12px;
+    background: #f5f5f7;
+    border-radius: 8px;
     margin-bottom: 6px;
+    transition: background 0.12s ease;
+  }
+  .filter-item.active {
+    background: #eff6ff;
+  }
+  .filter-radio {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .filter-radio input[type="radio"] {
+    margin-top: 2px;
+    accent-color: #0071e3;
   }
   .filter-info {
     flex: 1;
@@ -297,24 +383,33 @@
     display: block;
     font-size: 13px;
     font-weight: 500;
+    color: #1d1d1f;
   }
   .filter-jql {
     display: block;
     font-size: 11px;
-    color: #888;
+    color: #6e6e73;
     margin-top: 2px;
     word-break: break-all;
+    font-family: "SF Mono", "Menlo", monospace;
   }
   .remove-btn {
-    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
     border: none;
     background: none;
-    color: #999;
+    color: #aeaeb2;
     cursor: pointer;
-    font-size: 16px;
+    border-radius: 4px;
+    transition: all 0.12s ease;
   }
   .remove-btn:hover {
-    color: #c62828;
+    background: rgba(255, 59, 48, 0.1);
+    color: #ff3b30;
   }
   .add-filter {
     display: flex;
@@ -323,30 +418,32 @@
   .add-filter input {
     flex: 1;
     padding: 6px 10px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
     font-size: 13px;
+    font-family: inherit;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .add-filter input:focus {
+    border-color: #0071e3;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+  }
+  .add-filter input::placeholder {
+    color: #aeaeb2;
   }
   .save-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid #eee;
-  }
-  .save-btn {
-    background: #1a73e8;
-    color: white;
-    border: none;
-    padding: 8px 24px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .save-btn:hover:not(:disabled) {
-    background: #1565c0;
+    padding-top: 20px;
+    border-top: 1px solid #e5e5e5;
   }
   .save-message {
     font-size: 13px;
-    color: #2e7d32;
+    color: #34c759;
   }
 </style>

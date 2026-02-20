@@ -25,7 +25,6 @@
   let focusedKeys = $derived(focusStateData.focused_issues);
 
   onMount(async () => {
-    // Load cached data first for instant display
     try {
       const cached = await getCachedIssues();
       if (cached.issues.length > 0) {
@@ -34,16 +33,13 @@
       }
     } catch {}
 
-    // Load settings and focus state
     try {
       appSettings = await getSettings();
       focusStateData = await getFocusState();
     } catch {}
 
-    // Then fetch fresh data
     await handleRefresh();
 
-    // Listen for updates from polling
     listen<NormalizedIssue[]>("issues-updated", (event) => {
       issues = event.payload;
       lastFetched = new Date().toISOString();
@@ -53,7 +49,6 @@
       focusStateData = event.payload;
     });
 
-    // Refresh focus state when window gains focus
     const currentWindow = getCurrentWindow();
     currentWindow.onFocusChanged(async ({ payload: focused }) => {
       if (focused) {
@@ -110,15 +105,15 @@
 
   {#if errorMsg}
     <div class="error">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="7"/>
+        <path d="M8 5v3.5M8 10.5v.5"/>
+      </svg>
       <p>{errorMsg}</p>
     </div>
   {/if}
 
   <IssueList {issues} {focusedKeys} onToggleFocus={handleToggleFocus} />
-
-  <div class="footer">
-    <span class="app-name">JIRA Focus</span>
-  </div>
 </div>
 
 <style>
@@ -126,29 +121,28 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: white;
-    border-radius: 8px;
+    background: var(--color-bg);
+    border-radius: var(--radius-lg);
     overflow: hidden;
   }
   .error {
-    padding: 8px 12px;
-    background: #fff3e0;
-    color: #e65100;
-    font-size: 12px;
-    border-bottom: 1px solid #ffe0b2;
-    max-height: 120px;
-    overflow-y: auto;
-    word-break: break-all;
-  }
-  .footer {
     display: flex;
-    justify-content: center;
-    padding: 6px 12px;
-    border-top: 1px solid #eee;
-    background: #fafafa;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fff2f0;
+    color: var(--color-error);
+    font-size: 12px;
+    line-height: 1.4;
+    border-bottom: 1px solid #fecaca;
+    max-height: 100px;
+    overflow-y: auto;
   }
-  .app-name {
-    font-size: 11px;
-    color: #aaa;
+  .error svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .error p {
+    word-break: break-all;
   }
 </style>
