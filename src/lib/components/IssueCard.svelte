@@ -5,10 +5,8 @@
 
   interface Props {
     issue: NormalizedIssue;
-    isFocused: boolean;
-    onToggleFocus: (key: string) => void;
   }
-  let { issue, isFocused, onToggleFocus }: Props = $props();
+  let { issue }: Props = $props();
 
   const priorityColors: Record<string, string> = {
     Highest: "#ff3b30",
@@ -23,21 +21,11 @@
   function handleClick() {
     openUrl(issue.url);
   }
-
-  function handleToggle(e: Event) {
-    e.stopPropagation();
-    onToggleFocus(issue.key);
-  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="card" class:focused={isFocused} onclick={handleClick}>
-  <button class="focus-btn" class:active={isFocused} onclick={handleToggle} title={isFocused ? "集中モードから外す" : "集中モードに追加"}>
-    <svg width="14" height="14" viewBox="0 0 16 16" fill={isFocused ? "currentColor" : "none"} stroke="currentColor" stroke-width="1.5">
-      <path d="M8 1.5l1.85 3.75 4.15.6-3 2.93.71 4.12L8 10.88 4.29 12.9l.71-4.12-3-2.93 4.15-.6z"/>
-    </svg>
-  </button>
+<div class="card" onclick={handleClick}>
   <div class="content">
     <div class="header">
       <span class="key">{issue.key}</span>
@@ -60,7 +48,6 @@
   .card {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
     padding: 10px 14px;
     cursor: pointer;
     transition: background 0.12s ease;
@@ -68,33 +55,6 @@
   }
   .card:hover {
     background: var(--color-surface);
-  }
-  .card.focused {
-    background: #fefce8;
-  }
-  .card.focused:hover {
-    background: #fef9c3;
-  }
-  .focus-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--color-text-tertiary);
-    flex-shrink: 0;
-    border-radius: var(--radius-sm);
-    transition: all 0.12s ease;
-  }
-  .focus-btn:hover {
-    background: rgba(0, 0, 0, 0.04);
-    color: var(--color-text-secondary);
-  }
-  .focus-btn.active {
-    color: #f59e0b;
   }
   .content {
     flex: 1;

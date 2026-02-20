@@ -22,7 +22,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             } = event
             {
                 let app = tray.app_handle();
-                toggle_popup(app, position);
+                show_popup(app, position);
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -39,23 +39,18 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn toggle_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
+fn show_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
     if let Some(window) = app.get_webview_window("popup") {
-        if window.is_visible().unwrap_or(false) {
-            let _ = window.hide();
-        } else {
-            // Position popup below the tray icon, centered horizontally
-            let window_width = 380.0_f64;
-            let x = tray_position.x - (window_width / 2.0);
-            let y = tray_position.y;
-            let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
-            let _ = window.show();
-            let _ = window.set_focus();
-        }
+        let window_width = 380.0_f64;
+        let x = tray_position.x - (window_width / 2.0);
+        let y = tray_position.y;
+        let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }
 
-fn open_settings(app: &AppHandle) {
+pub fn open_settings(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("settings") {
         let _ = window.show();
         let _ = window.set_focus();

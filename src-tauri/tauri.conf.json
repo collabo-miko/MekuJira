@@ -22,18 +22,6 @@
         "resizable": false,
         "skipTaskbar": true,
         "alwaysOnTop": true
-      },
-      {
-        "label": "widget",
-        "url": "/widget",
-        "title": "JIRA Focus Widget",
-        "width": 300,
-        "height": 200,
-        "visible": false,
-        "decorations": false,
-        "transparent": true,
-        "alwaysOnTop": true,
-        "skipTaskbar": true
       }
     ],
     "macOSPrivateApi": true,

@@ -8,6 +8,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 
+#[tauri::command]
+fn open_settings_window(app: tauri::AppHandle) {
+    tray::open_settings(&app);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -25,10 +30,7 @@ pub fn run() {
             commands::settings::save_settings,
             commands::settings::save_api_token,
             commands::settings::has_api_token,
-            commands::focus::get_focus_state,
-            commands::focus::toggle_focus_issue,
-            commands::focus::update_widget_position,
-            commands::focus::set_widget_minimized,
+            open_settings_window,
         ])
         .setup(|app| {
             // Setup tray icon

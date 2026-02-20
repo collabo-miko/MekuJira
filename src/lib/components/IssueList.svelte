@@ -4,10 +4,8 @@
 
   interface Props {
     issues: NormalizedIssue[];
-    focusedKeys: string[];
-    onToggleFocus: (key: string) => void;
   }
-  let { issues, focusedKeys, onToggleFocus }: Props = $props();
+  let { issues }: Props = $props();
 </script>
 
 <div class="issue-list">
@@ -22,11 +20,7 @@
     </div>
   {:else}
     {#each issues as issue (issue.key)}
-      <IssueCard
-        {issue}
-        isFocused={focusedKeys.includes(issue.key)}
-        {onToggleFocus}
-      />
+      <IssueCard {issue} />
     {/each}
   {/if}
 </div>

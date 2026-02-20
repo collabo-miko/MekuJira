@@ -32,10 +32,3 @@ export interface IssueCache {
   filter_id: string;
   issues: NormalizedIssue[];
 }
-
-export interface FocusState {
-  focused_issues: string[];
-  widget_visible: boolean;
-  widget_minimized: boolean;
-  widget_position: { x: number; y: number } | null;
-}
