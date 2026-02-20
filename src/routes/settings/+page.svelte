@@ -51,6 +51,12 @@
     isTesting = true;
     testResult = null;
     try {
+      // Save current form values first so test_connection can read them
+      if (apiToken) {
+        await saveApiToken(apiToken);
+        hasTokenState = true;
+      }
+      await saveSettings(settings);
       const name = await testConnection();
       testResult = { success: true, message: `接続成功: ${name}` };
     } catch (e) {
