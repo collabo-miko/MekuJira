@@ -33,6 +33,11 @@ pub fn run() {
             open_settings_window,
         ])
         .setup(|app| {
+            // Initialize encrypted token storage
+            let app_data_dir = app.path().app_data_dir()
+                .expect("Failed to get app data dir");
+            keychain::init(app_data_dir);
+
             // Setup tray icon
             tray::setup_tray(app.handle())?;
 
