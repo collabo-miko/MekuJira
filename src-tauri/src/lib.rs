@@ -36,16 +36,6 @@ pub fn run() {
             // Setup tray icon
             tray::setup_tray(app.handle())?;
 
-            // Setup popup window: hide on focus lost
-            if let Some(popup) = app.get_webview_window("popup") {
-                let popup_clone = popup.clone();
-                popup.on_window_event(move |event| {
-                    if let tauri::WindowEvent::Focused(false) = event {
-                        let _ = popup_clone.hide();
-                    }
-                });
-            }
-
             // Start polling scheduler
             let app_handle = app.handle().clone();
             let stop_flag = Arc::new(AtomicBool::new(false));
