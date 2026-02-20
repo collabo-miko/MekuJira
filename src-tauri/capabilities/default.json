@@ -18,7 +18,6 @@
     "core:event:default",
     "opener:default",
     "positioner:default",
-    "http:default",
     "autostart:default"
   ]
 }
