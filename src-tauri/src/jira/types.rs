@@ -2,9 +2,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JiraSearchResponse {
-    pub total: u32,
+    #[serde(default)]
+    pub total: Option<u32>,
     #[serde(default)]
     pub issues: Vec<JiraIssue>,
+    #[serde(default, rename = "startAt")]
+    pub start_at: Option<u32>,
+    #[serde(default, rename = "maxResults")]
+    pub max_results: Option<u32>,
+    #[serde(default, rename = "isLast")]
+    pub is_last: Option<bool>,
+    #[serde(default, rename = "nextPageToken")]
+    pub next_page_token: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

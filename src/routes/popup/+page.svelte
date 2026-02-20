@@ -136,6 +136,9 @@
     color: #e65100;
     font-size: 12px;
     border-bottom: 1px solid #ffe0b2;
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-all;
   }
   .footer {
     display: flex;

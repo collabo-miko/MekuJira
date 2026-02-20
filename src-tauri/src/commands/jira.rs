@@ -14,6 +14,10 @@ pub async fn get_issues(app: AppHandle) -> Result<Vec<NormalizedIssue>, String> 
 
     let cfg = config::load(&app_data_dir)?;
 
+    if cfg.jira.domain.is_empty() || cfg.jira.email.is_empty() {
+        return Err("JIRA接続情報が設定されていません。設定画面で設定してください。".to_string());
+    }
+
     let active_filter = cfg
         .filters
         .iter()
