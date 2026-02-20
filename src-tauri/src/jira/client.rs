@@ -37,10 +37,12 @@ pub async fn search_issues(
         return Err(format!("JIRA API error ({}): {}", status, body));
     }
 
-    let search_response: JiraSearchResponse = response
-        .json()
+    let body = response
+        .text()
         .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+    let search_response: JiraSearchResponse =
+        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))?;
 
     let issues = search_response
         .issues
@@ -68,10 +70,12 @@ pub async fn test_connection(domain: &str, email: &str) -> Result<String, String
         return Err(format!("Connection failed (HTTP {})", status));
     }
 
-    let myself: JiraMyselfResponse = response
-        .json()
+    let body = response
+        .text()
         .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        .map_err(|e| format!("Failed to read response: {}", e))?;
+    let myself: JiraMyselfResponse =
+        serde_json::from_str(&body).map_err(|e| format!("Failed to parse response: {}", e))?;
 
     Ok(myself.display_name)
 }

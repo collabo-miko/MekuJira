@@ -1,5 +1,5 @@
 use tauri::AppHandle;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use crate::jira::client;
 use crate::jira::types::NormalizedIssue;

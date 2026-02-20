@@ -1,5 +1,5 @@
 use tauri::AppHandle;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use crate::store::focus_state::{self, FocusState, WidgetPosition};
 
