@@ -33,4 +33,4 @@ urlencoding = "2"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
 block2 = "0.6"
 objc2-app-kit = { version = "0.3", features = ["block2", "NSEvent", "NSRunningApplication", "NSWorkspace"] }
-objc2-foundation = { version = "0.3", features = ["block2", "NSNotification", "NSString", "NSNotificationCenter", "NSOperation"] }
+objc2-foundation = { version = "0.3", features = ["block2", "NSNotification", "NSString"] }
