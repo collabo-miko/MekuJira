@@ -1,40 +1,55 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
-  import FilterBar from "$lib/components/FilterBar.svelte";
-  import IssueList from "$lib/components/IssueList.svelte";
-  import { getCachedIssues, refreshIssues } from "$lib/api/jira";
-  import { getSettings, saveSettings } from "$lib/api/settings";
-  import type { NormalizedIssue, AppSettings } from "$lib/types";
+  import AppHeader from "$lib/components/AppHeader.svelte";
+  import TrackingView from "$lib/components/TrackingView.svelte";
+  import DashboardView from "$lib/components/DashboardView.svelte";
+  import { getAllFilterIssues, refreshAllFilters, resizePopup } from "$lib/api/jira";
+  import { getBookmarks, toggleBookmark } from "$lib/api/bookmarks";
+  import { getSettings } from "$lib/api/settings";
+  import type {
+    NormalizedIssue,
+    BookmarkedIssue,
+    AppSettings,
+    ViewMode,
+    FilterIssuesMap,
+  } from "$lib/types";
   import { getCurrentWindow } from "@tauri-apps/api/window";
-  import { invoke } from "@tauri-apps/api/core";
 
-  let issues = $state<NormalizedIssue[]>([]);
+  let viewMode = $state<ViewMode>("tracking");
   let isLoading = $state(false);
-  let lastFetched = $state<string | null>(null);
   let appSettings = $state<AppSettings | null>(null);
   let errorMsg = $state<string | null>(null);
+
+  // Tracking mode state
+  let bookmarks = $state<BookmarkedIssue[]>([]);
+
+  // Dashboard mode state
+  let filterIssues = $state<FilterIssuesMap>({});
+  let bookmarkedKeys = $derived(new Set(bookmarks.map((b) => b.key)));
 
   let filters = $derived(appSettings?.filters ?? []);
 
   onMount(async () => {
+    // Load bookmarks
     try {
-      const cached = await getCachedIssues();
-      if (cached.issues.length > 0) {
-        issues = cached.issues;
-        lastFetched = cached.last_fetched;
-      }
+      bookmarks = await getBookmarks();
     } catch {}
 
+    // Load settings
     try {
       appSettings = await getSettings();
     } catch {}
 
-    await handleRefresh();
+    // Listen for events
+    listen<FilterIssuesMap>("filter-issues-updated", (event) => {
+      filterIssues = event.payload;
+    });
 
-    listen<NormalizedIssue[]>("issues-updated", (event) => {
-      issues = event.payload;
-      lastFetched = new Date().toISOString();
+    listen("bookmarks-updated", async () => {
+      try {
+        bookmarks = await getBookmarks();
+      } catch {}
     });
 
     const currentWindow = getCurrentWindow();
@@ -42,21 +57,34 @@
       if (focused) {
         try {
           appSettings = await getSettings();
+          bookmarks = await getBookmarks();
         } catch {}
       }
     });
   });
 
-  async function handleRefresh() {
+  async function handleModeChange(mode: ViewMode) {
+    viewMode = mode;
+    try {
+      await resizePopup(mode);
+    } catch (e) {
+      console.error("Failed to resize:", e);
+    }
+
+    if (mode === "dashboard" && Object.keys(filterIssues).length === 0) {
+      await handleDashboardRefresh();
+    }
+  }
+
+  async function handleDashboardRefresh() {
     if (!appSettings?.jira.domain || !appSettings?.jira.email) {
-      errorMsg = "JIRA接続情報が設定されていません。右上の歯車アイコンから設定してください。";
+      errorMsg = "JIRA接続情報が設定されていません。歯車アイコンから設定してください。";
       return;
     }
     isLoading = true;
     errorMsg = null;
     try {
-      issues = await refreshIssues();
-      lastFetched = new Date().toISOString();
+      filterIssues = await refreshAllFilters();
     } catch (e) {
       errorMsg = String(e);
     } finally {
@@ -64,45 +92,18 @@
     }
   }
 
-  async function handleFilterChange(filterId: string) {
-    if (!appSettings) return;
-    const updatedFilters = appSettings.filters.map((f) => ({
-      ...f,
-      is_active: f.id === filterId,
-    }));
-    appSettings = { ...appSettings, filters: updatedFilters };
-    await saveSettings(appSettings);
-    await handleRefresh();
-  }
-
-  function openSettings() {
-    invoke("open_settings_window");
-  }
-
-  function startDrag() {
-    getCurrentWindow().startDragging();
+  async function handleToggleBookmark(issue: NormalizedIssue, filterId: string) {
+    try {
+      await toggleBookmark(issue, filterId);
+      bookmarks = await getBookmarks();
+    } catch (e) {
+      console.error("Failed to toggle bookmark:", e);
+    }
   }
 </script>
 
 <div class="popup">
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="header" onmousedown={startDrag}>
-    <span class="app-title">JIRA Focus</span>
-    <button class="settings-btn" onmousedown={(e) => e.stopPropagation()} onclick={openSettings} title="設定">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M6.86 2.07a1 1 0 0 1 2.28 0l.12.56a1 1 0 0 0 1.33.6l.52-.22a1 1 0 0 1 1.14 1.62l-.4.4a1 1 0 0 0 0 1.33l.4.4a1 1 0 0 1-1.14 1.62l-.52-.22a1 1 0 0 0-1.33.6l-.12.56a1 1 0 0 1-2.28 0l-.12-.56a1 1 0 0 0-1.33-.6l-.52.22a1 1 0 0 1-1.14-1.62l.4-.4a1 1 0 0 0 0-1.33l-.4-.4A1 1 0 0 1 4.89 2.4l.52.22a1 1 0 0 0 1.33-.6l.12-.56z"/>
-        <circle cx="8" cy="6" r="1.5"/>
-      </svg>
-    </button>
-  </div>
-
-  <FilterBar
-    {filters}
-    {lastFetched}
-    {isLoading}
-    onRefresh={handleRefresh}
-    onFilterChange={handleFilterChange}
-  />
+  <AppHeader {viewMode} onModeChange={handleModeChange} />
 
   {#if errorMsg}
     <div class="error">
@@ -114,7 +115,18 @@
     </div>
   {/if}
 
-  <IssueList {issues} />
+  {#if viewMode === "tracking"}
+    <TrackingView {bookmarks} />
+  {:else}
+    <DashboardView
+      {filters}
+      {filterIssues}
+      {bookmarkedKeys}
+      {isLoading}
+      onRefresh={handleDashboardRefresh}
+      onToggleBookmark={handleToggleBookmark}
+    />
+  {/if}
 </div>
 
 <style>
@@ -125,41 +137,6 @@
     background: var(--color-bg);
     border-radius: var(--radius-lg);
     overflow: hidden;
-  }
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px 0;
-    cursor: grab;
-    -webkit-app-region: drag;
-  }
-  .header:active {
-    cursor: grabbing;
-  }
-  .app-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    letter-spacing: -0.01em;
-  }
-  .settings-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: none;
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    color: var(--color-text-tertiary);
-    transition: all 0.12s ease;
-    -webkit-app-region: no-drag;
-  }
-  .settings-btn:hover {
-    background: var(--color-surface);
-    color: var(--color-text-primary);
   }
   .error {
     display: flex;
@@ -173,6 +150,7 @@
     border-bottom: 1px solid #fecaca;
     max-height: 100px;
     overflow-y: auto;
+    flex-shrink: 0;
   }
   .error svg {
     flex-shrink: 0;

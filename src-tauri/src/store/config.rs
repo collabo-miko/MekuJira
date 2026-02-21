@@ -21,7 +21,7 @@ pub struct JqlFilter {
     pub id: String,
     pub name: String,
     pub jql: String,
-    pub is_active: bool,
+    pub enabled: bool,
 }
 
 impl Default for AppConfig {
@@ -36,7 +36,7 @@ impl Default for AppConfig {
                 name: "自分の未完了課題".to_string(),
                 jql: "assignee = currentUser() AND resolution = Unresolved ORDER BY priority DESC"
                     .to_string(),
-                is_active: true,
+                enabled: true,
             }],
             polling_interval_secs: 60,
             auto_start: false,

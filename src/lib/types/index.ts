@@ -8,6 +8,11 @@ export interface NormalizedIssue {
   url: string;
 }
 
+export interface BookmarkedIssue extends NormalizedIssue {
+  bookmarked_at: string;
+  source_filter_id: string;
+}
+
 export interface JiraConfig {
   domain: string;
   email: string;
@@ -17,7 +22,7 @@ export interface JqlFilter {
   id: string;
   name: string;
   jql: string;
-  is_active: boolean;
+  enabled: boolean;
 }
 
 export interface AppSettings {
@@ -32,3 +37,7 @@ export interface IssueCache {
   filter_id: string;
   issues: NormalizedIssue[];
 }
+
+export type ViewMode = 'tracking' | 'dashboard';
+
+export type FilterIssuesMap = Record<string, NormalizedIssue[]>;

@@ -41,7 +41,11 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
 
 fn show_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
     if let Some(window) = app.get_webview_window("popup") {
-        let window_width = 380.0_f64;
+        // Get current window size to center properly
+        let window_width = window
+            .outer_size()
+            .map(|s| s.width as f64)
+            .unwrap_or(380.0);
         let x = tray_position.x - (window_width / 2.0);
         let y = tray_position.y;
         let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
@@ -57,9 +61,13 @@ pub fn open_settings(app: &AppHandle) {
         return;
     }
 
-    let _window = tauri::WebviewWindowBuilder::new(app, "settings", tauri::WebviewUrl::App("/settings".into()))
-        .title("JIRA Focus - 設定")
-        .inner_size(600.0, 500.0)
-        .resizable(true)
-        .build();
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        "settings",
+        tauri::WebviewUrl::App("/settings".into()),
+    )
+    .title("JIRA Focus - 設定")
+    .inner_size(600.0, 700.0)
+    .resizable(true)
+    .build();
 }

@@ -4,6 +4,7 @@ mod keychain;
 mod store;
 mod tray;
 
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
@@ -26,6 +27,13 @@ pub fn run() {
             commands::jira::refresh_issues,
             commands::jira::get_cached_issues,
             commands::jira::test_connection,
+            commands::jira::get_all_filter_issues,
+            commands::jira::refresh_all_filters,
+            commands::bookmarks::get_bookmarks,
+            commands::bookmarks::add_bookmark,
+            commands::bookmarks::remove_bookmark,
+            commands::bookmarks::toggle_bookmark,
+            commands::window::resize_popup,
             commands::settings::get_settings,
             commands::settings::save_settings,
             commands::settings::save_api_token,
@@ -34,7 +42,9 @@ pub fn run() {
         ])
         .setup(|app| {
             // Initialize encrypted token storage
-            let app_data_dir = app.path().app_data_dir()
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
                 .expect("Failed to get app data dir");
             keychain::init(app_data_dir);
 
@@ -77,7 +87,7 @@ async fn polling_loop(app: tauri::AppHandle, stop_flag: Arc<AtomicBool>) {
             break;
         }
 
-        // Fetch issues
+        // Fetch issues for all enabled filters
         let app_data_dir = match app.path().app_data_dir() {
             Ok(dir) => dir,
             Err(_) => continue,
@@ -92,29 +102,73 @@ async fn polling_loop(app: tauri::AppHandle, stop_flag: Arc<AtomicBool>) {
             continue;
         }
 
-        let active_filter = match config.filters.iter().find(|f| f.is_active) {
-            Some(f) => f.clone(),
-            None => continue,
-        };
+        let enabled_filters: Vec<_> = config.filters.iter().filter(|f| f.enabled).cloned().collect();
+        if enabled_filters.is_empty() {
+            continue;
+        }
 
-        match jira::client::search_issues(
-            &config.jira.domain,
-            &config.jira.email,
-            &active_filter.jql,
-        )
-        .await
-        {
-            Ok(issues) => {
-                let issue_cache = store::cache::IssueCache {
-                    last_fetched: Some(chrono::Utc::now().to_rfc3339()),
-                    filter_id: active_filter.id.clone(),
-                    issues: issues.clone(),
-                };
-                let _ = store::cache::save(&app_data_dir, &issue_cache);
-                let _ = app.emit("issues-updated", &issues);
+        // Fetch all enabled filters in parallel
+        let mut handles = Vec::new();
+        for filter in &enabled_filters {
+            let domain = config.jira.domain.clone();
+            let email = config.jira.email.clone();
+            let jql = filter.jql.clone();
+            let filter_id = filter.id.clone();
+            handles.push(tokio::spawn(async move {
+                let result = jira::client::search_issues(&domain, &email, &jql).await;
+                (filter_id, result)
+            }));
+        }
+
+        let mut filter_results: HashMap<String, Vec<jira::types::NormalizedIssue>> = HashMap::new();
+        for handle in handles {
+            match handle.await {
+                Ok((filter_id, Ok(issues))) => {
+                    let _ =
+                        store::cache::save_filter_cache(&app_data_dir, &filter_id, issues.clone());
+                    filter_results.insert(filter_id, issues);
+                }
+                Ok((filter_id, Err(e))) => {
+                    log::warn!("Polling failed for filter {}: {}", filter_id, e);
+                }
+                Err(e) => {
+                    log::warn!("Task join error: {}", e);
+                }
             }
-            Err(e) => {
-                log::warn!("Polling failed: {}", e);
+        }
+
+        if !filter_results.is_empty() {
+            let _ = app.emit("filter-issues-updated", &filter_results);
+
+            // Also emit issues-updated with first filter's issues for backward compat
+            if let Some(first_filter) = enabled_filters.first() {
+                if let Some(issues) = filter_results.get(&first_filter.id) {
+                    let issue_cache = store::cache::IssueCache {
+                        last_fetched: Some(chrono::Utc::now().to_rfc3339()),
+                        filter_id: first_filter.id.clone(),
+                        issues: issues.clone(),
+                    };
+                    let _ = store::cache::save(&app_data_dir, &issue_cache);
+                    let _ = app.emit("issues-updated", issues);
+                }
+            }
+        }
+
+        // Update bookmarks with fresh issue data
+        if let Ok(mut bookmark_store) = store::bookmarks::load(&app_data_dir) {
+            let mut changed = false;
+            for bookmark in &mut bookmark_store.bookmarked_issues {
+                for issues in filter_results.values() {
+                    if let Some(fresh) = issues.iter().find(|i| i.key == bookmark.issue.key) {
+                        bookmark.issue = fresh.clone();
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+            if changed {
+                let _ = store::bookmarks::save(&app_data_dir, &bookmark_store);
+                let _ = app.emit("bookmarks-updated", ());
             }
         }
     }

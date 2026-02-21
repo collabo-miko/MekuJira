@@ -8,7 +8,7 @@ const defaultSettings: AppSettings = {
       id: "default",
       name: "自分の未完了課題",
       jql: "assignee = currentUser() AND resolution = Unresolved ORDER BY priority DESC",
-      is_active: true,
+      enabled: true,
     },
   ],
   polling_interval_secs: 60,

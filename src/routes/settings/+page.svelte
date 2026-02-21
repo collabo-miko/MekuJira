@@ -70,7 +70,7 @@
     const id = `filter_${Date.now()}`;
     settings.filters = [
       ...settings.filters,
-      { id, name: newFilterName, jql: newFilterJql, is_active: false },
+      { id, name: newFilterName, jql: newFilterJql, enabled: true },
     ];
     newFilterName = "";
     newFilterJql = "";
@@ -80,11 +80,10 @@
     settings.filters = settings.filters.filter((f) => f.id !== id);
   }
 
-  function setActiveFilter(id: string) {
-    settings.filters = settings.filters.map((f) => ({
-      ...f,
-      is_active: f.id === id,
-    }));
+  function toggleFilterEnabled(id: string) {
+    settings.filters = settings.filters.map((f) =>
+      f.id === id ? { ...f, enabled: !f.enabled } : f,
+    );
   }
 </script>
 
@@ -141,16 +140,16 @@
 
   <section>
     <h2>JQLフィルター</h2>
+    <p class="section-hint">チェックを入れたフィルターが「対象課題一覧」に表示されます</p>
     {#if settings.filters.length > 0}
       <div class="filter-list">
         {#each settings.filters as filter (filter.id)}
-          <div class="filter-item" class:active={filter.is_active}>
-            <label class="filter-radio">
+          <div class="filter-item" class:active={filter.enabled}>
+            <label class="filter-toggle">
               <input
-                type="radio"
-                name="activeFilter"
-                checked={filter.is_active}
-                onchange={() => setActiveFilter(filter.id)}
+                type="checkbox"
+                checked={filter.enabled}
+                onchange={() => toggleFilterEnabled(filter.id)}
               />
               <div class="filter-info">
                 <span class="filter-name">{filter.name}</span>
@@ -230,6 +229,12 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 12px;
+  }
+  .section-hint {
+    font-size: 12px;
+    color: #6e6e73;
+    margin-bottom: 12px;
+    margin-top: -4px;
   }
   section {
     margin-bottom: 28px;
@@ -363,7 +368,7 @@
   .filter-item.active {
     background: #eff6ff;
   }
-  .filter-radio {
+  .filter-toggle {
     display: flex;
     align-items: flex-start;
     gap: 8px;
@@ -371,9 +376,12 @@
     min-width: 0;
     cursor: pointer;
   }
-  .filter-radio input[type="radio"] {
+  .filter-toggle input[type="checkbox"] {
     margin-top: 2px;
+    width: 16px;
+    height: 16px;
     accent-color: #0071e3;
+    flex-shrink: 0;
   }
   .filter-info {
     flex: 1;
