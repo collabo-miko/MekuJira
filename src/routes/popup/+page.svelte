@@ -143,11 +143,11 @@
     align-items: flex-start;
     gap: 8px;
     padding: 10px 14px;
-    background: #fff2f0;
+    background: var(--color-error-bg);
     color: var(--color-error);
     font-size: 12px;
     line-height: 1.4;
-    border-bottom: 1px solid #fecaca;
+    border-bottom: 1px solid var(--color-error-border);
     max-height: 100px;
     overflow-y: auto;
     flex-shrink: 0;

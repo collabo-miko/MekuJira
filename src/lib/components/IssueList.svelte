@@ -11,7 +11,7 @@
 <div class="issue-list">
   {#if issues.length === 0}
     <div class="empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d1d6" stroke-width="1.5">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-icon-muted)" stroke-width="1.5">
         <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
         <rect x="9" y="3" width="6" height="4" rx="1"/>
       </svg>

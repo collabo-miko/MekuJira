@@ -106,9 +106,9 @@
     color: var(--color-text-secondary);
   }
   .tab.active {
-    background: #fff;
+    background: var(--color-elevated);
     color: var(--color-text-primary);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px var(--color-shadow);
   }
   .settings-btn {
     display: flex;

@@ -2,18 +2,80 @@
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   --color-bg: #ffffff;
   --color-surface: #f5f5f7;
+  --color-surface-hover: #eff1f3;
+  --color-elevated: #ffffff;
   --color-border: #e5e5e5;
   --color-text-primary: #1d1d1f;
   --color-text-secondary: #6e6e73;
   --color-text-tertiary: #aeaeb2;
   --color-accent: #0071e3;
   --color-accent-hover: #0077ed;
+  --color-accent-bg: #eff6ff;
+  --color-focus-ring: rgba(0, 113, 227, 0.12);
   --color-success: #34c759;
+  --color-success-bg: #f0fdf4;
   --color-warning: #ff9f0a;
   --color-error: #ff3b30;
+  --color-error-bg: #fff2f0;
+  --color-error-bg-hover: rgba(255, 59, 48, 0.1);
+  --color-error-border: #fecaca;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-selection: rgba(0, 113, 227, 0.2);
+  --color-icon-muted: #d1d1d6;
+  --badge-new-bg: #f0f4ff;
+  --badge-new-text: #3b5998;
+  --badge-new-dot: #4a90d9;
+  --badge-progress-bg: #fff8f0;
+  --badge-progress-text: #b45309;
+  --badge-progress-dot: #f59e0b;
+  --badge-done-bg: #f0fdf4;
+  --badge-done-text: #15803d;
+  --badge-done-dot: #22c55e;
+  --badge-default-bg: #f5f5f5;
+  --badge-default-text: #6e6e73;
+  --badge-default-dot: #aeaeb2;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1c1c1e;
+    --color-surface: #2c2c2e;
+    --color-surface-hover: #3a3a3c;
+    --color-elevated: #2c2c2e;
+    --color-border: #3a3a3c;
+    --color-text-primary: #f5f5f7;
+    --color-text-secondary: #a1a1a6;
+    --color-text-tertiary: #636366;
+    --color-accent: #409cff;
+    --color-accent-hover: #64b5f6;
+    --color-accent-bg: rgba(64, 156, 255, 0.12);
+    --color-focus-ring: rgba(64, 156, 255, 0.25);
+    --color-success: #30d158;
+    --color-success-bg: rgba(48, 209, 88, 0.12);
+    --color-warning: #ffd60a;
+    --color-error: #ff453a;
+    --color-error-bg: rgba(255, 69, 58, 0.12);
+    --color-error-bg-hover: rgba(255, 69, 58, 0.18);
+    --color-error-border: rgba(255, 69, 58, 0.25);
+    --color-shadow: rgba(0, 0, 0, 0.3);
+    --color-selection: rgba(64, 156, 255, 0.3);
+    --color-icon-muted: #636366;
+    --badge-new-bg: rgba(64, 156, 255, 0.15);
+    --badge-new-text: #64b5f6;
+    --badge-new-dot: #409cff;
+    --badge-progress-bg: rgba(255, 214, 10, 0.12);
+    --badge-progress-text: #ffd60a;
+    --badge-progress-dot: #ff9f0a;
+    --badge-done-bg: rgba(48, 209, 88, 0.12);
+    --badge-done-text: #30d158;
+    --badge-done-dot: #30d158;
+    --badge-default-bg: #3a3a3c;
+    --badge-default-text: #a1a1a6;
+    --badge-default-dot: #636366;
+  }
 }
 
 * {
@@ -38,5 +100,5 @@ body {
 }
 
 ::selection {
-  background: rgba(0, 113, 227, 0.2);
+  background: var(--color-selection);
 }

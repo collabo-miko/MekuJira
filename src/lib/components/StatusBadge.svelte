@@ -5,20 +5,20 @@
   }
   let { status, category }: Props = $props();
 
-  const categoryStyles: Record<string, { bg: string; text: string; dot: string }> = {
-    new: { bg: "#f0f4ff", text: "#3b5998", dot: "#4a90d9" },
-    indeterminate: { bg: "#fff8f0", text: "#b45309", dot: "#f59e0b" },
-    done: { bg: "#f0fdf4", text: "#15803d", dot: "#22c55e" },
+  const categoryVarMap: Record<string, string> = {
+    new: "new",
+    indeterminate: "progress",
+    done: "done",
   };
 
-  let style = $derived(categoryStyles[category] ?? { bg: "#f5f5f5", text: "#6e6e73", dot: "#aeaeb2" });
+  let varPrefix = $derived(categoryVarMap[category] ?? "default");
 </script>
 
 <span
   class="badge"
-  style="background: {style.bg}; color: {style.text};"
+  style="background: var(--badge-{varPrefix}-bg); color: var(--badge-{varPrefix}-text);"
 >
-  <span class="dot" style="background: {style.dot};"></span>
+  <span class="dot" style="background: var(--badge-{varPrefix}-dot);"></span>
   {status}
 </span>
 

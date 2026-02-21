@@ -21,7 +21,7 @@
 <div class="tracking-view">
   {#if bookmarks.length === 0}
     <div class="empty">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d1d6" stroke-width="1.5">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-icon-muted)" stroke-width="1.5">
         <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
       </svg>
       <p class="empty-title">追跡中の課題はありません</p>
@@ -96,6 +96,6 @@
     opacity: 1;
   }
   .unbookmark-btn:hover {
-    color: #ff3b30;
+    color: var(--color-error);
   }
 </style>

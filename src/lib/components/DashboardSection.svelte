@@ -65,7 +65,7 @@
     transition: background 0.12s ease;
   }
   .section-header:hover {
-    background: #eff1f3;
+    background: var(--color-surface-hover);
   }
   .chevron {
     display: flex;

@@ -78,7 +78,7 @@
   .checkbox-wrapper input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #0071e3;
+    accent-color: var(--color-accent);
     cursor: pointer;
   }
   .content {

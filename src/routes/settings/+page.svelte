@@ -263,9 +263,11 @@
     padding: 24px;
     max-width: 560px;
     margin: 0 auto;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-family: var(--font-family);
     overflow-y: auto;
     max-height: 100vh;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
   }
   .page-header {
     margin-bottom: 28px;
@@ -273,20 +275,20 @@
   h1 {
     font-size: 22px;
     font-weight: 700;
-    color: #1d1d1f;
+    color: var(--color-text-primary);
     letter-spacing: -0.02em;
   }
   h2 {
     font-size: 13px;
     font-weight: 600;
-    color: #6e6e73;
+    color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 12px;
   }
   .section-hint {
     font-size: 12px;
-    color: #6e6e73;
+    color: var(--color-text-secondary);
     margin-bottom: 12px;
     margin-top: -4px;
   }
@@ -301,7 +303,7 @@
     margin-bottom: 5px;
     font-size: 13px;
     font-weight: 500;
-    color: #1d1d1f;
+    color: var(--color-text-primary);
   }
   .form-group input[type="text"],
   .form-group input[type="email"],
@@ -309,22 +311,22 @@
   .form-group input[type="number"] {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
-    color: #1d1d1f;
-    background: #f5f5f7;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
     outline: none;
     transition: all 0.15s ease;
   }
   .form-group input:focus {
-    border-color: #0071e3;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    border-color: var(--color-accent);
+    background: var(--color-elevated);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
   }
   .form-group input::placeholder {
-    color: #aeaeb2;
+    color: var(--color-text-tertiary);
   }
   .form-group.checkbox {
     margin-top: 4px;
@@ -335,19 +337,19 @@
     gap: 8px;
     cursor: pointer;
     font-size: 14px;
-    color: #1d1d1f;
+    color: var(--color-text-primary);
   }
   .toggle-label input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #0071e3;
+    accent-color: var(--color-accent);
   }
   .token-badge {
     display: inline-block;
     font-size: 10px;
     font-weight: 600;
-    color: #34c759;
-    background: #f0fdf4;
+    color: var(--color-success);
+    background: var(--color-success-bg);
     padding: 1px 6px;
     border-radius: 100px;
     margin-left: 6px;
@@ -361,18 +363,18 @@
   }
   .btn-secondary {
     padding: 6px 16px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
-    background: #fff;
+    background: var(--color-elevated);
     cursor: pointer;
     font-size: 13px;
     font-family: inherit;
     font-weight: 500;
-    color: #1d1d1f;
+    color: var(--color-text-primary);
     transition: all 0.12s ease;
   }
   .btn-secondary:hover:not(:disabled) {
-    background: #f5f5f7;
+    background: var(--color-surface);
   }
   .btn-secondary:disabled {
     opacity: 0.4;
@@ -382,7 +384,7 @@
     padding: 8px 28px;
     border: none;
     border-radius: 8px;
-    background: #0071e3;
+    background: var(--color-accent);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
@@ -391,7 +393,7 @@
     transition: all 0.12s ease;
   }
   .btn-primary:hover:not(:disabled) {
-    background: #0077ed;
+    background: var(--color-accent-hover);
   }
   .btn-primary:disabled {
     opacity: 0.4;
@@ -401,10 +403,10 @@
     font-size: 13px;
   }
   .result.success {
-    color: #34c759;
+    color: var(--color-success);
   }
   .result.error {
-    color: #ff3b30;
+    color: var(--color-error);
   }
   .filter-list {
     margin-bottom: 12px;
@@ -414,13 +416,13 @@
     align-items: flex-start;
     gap: 8px;
     padding: 10px 12px;
-    background: #f5f5f7;
+    background: var(--color-surface);
     border-radius: 8px;
     margin-bottom: 6px;
     transition: background 0.12s ease;
   }
   .filter-item.active {
-    background: #eff6ff;
+    background: var(--color-accent-bg);
   }
   .filter-toggle {
     display: flex;
@@ -434,7 +436,7 @@
     margin-top: 2px;
     width: 16px;
     height: 16px;
-    accent-color: #0071e3;
+    accent-color: var(--color-accent);
     flex-shrink: 0;
   }
   .filter-info {
@@ -445,12 +447,12 @@
     display: block;
     font-size: 13px;
     font-weight: 500;
-    color: #1d1d1f;
+    color: var(--color-text-primary);
   }
   .filter-jql {
     display: block;
     font-size: 11px;
-    color: #6e6e73;
+    color: var(--color-text-secondary);
     margin-top: 2px;
     word-break: break-all;
     font-family: "SF Mono", "Menlo", monospace;
@@ -465,23 +467,23 @@
     padding: 0;
     border: none;
     background: none;
-    color: #aeaeb2;
+    color: var(--color-text-tertiary);
     cursor: pointer;
     border-radius: 4px;
     transition: all 0.12s ease;
   }
   .edit-btn:hover {
-    background: rgba(0, 113, 227, 0.1);
-    color: #0071e3;
+    background: var(--color-accent-bg);
+    color: var(--color-accent);
   }
   .remove-btn:hover {
-    background: rgba(255, 59, 48, 0.1);
-    color: #ff3b30;
+    background: var(--color-error-bg-hover);
+    color: var(--color-error);
   }
   .filter-item.editing {
     padding: 12px;
-    background: #fff;
-    border: 1px solid #0071e3;
+    background: var(--color-elevated);
+    border: 1px solid var(--color-accent);
   }
   .edit-form {
     display: flex;
@@ -492,19 +494,19 @@
   .edit-input {
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     font-size: 13px;
     font-family: inherit;
-    color: #1d1d1f;
-    background: #f5f5f7;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
     outline: none;
     transition: all 0.15s ease;
   }
   .edit-input:focus {
-    border-color: #0071e3;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    border-color: var(--color-accent);
+    background: var(--color-elevated);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
   }
   .edit-input.edit-jql {
     font-family: "SF Mono", "Menlo", monospace;
@@ -518,7 +520,7 @@
     padding: 4px 14px;
     border: none;
     border-radius: 6px;
-    background: #0071e3;
+    background: var(--color-accent);
     color: #fff;
     font-size: 12px;
     font-family: inherit;
@@ -527,14 +529,14 @@
     transition: background 0.12s ease;
   }
   .btn-edit-save:hover {
-    background: #0077ed;
+    background: var(--color-accent-hover);
   }
   .btn-edit-cancel {
     padding: 4px 14px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--color-border);
     border-radius: 6px;
-    background: #fff;
-    color: #6e6e73;
+    background: var(--color-elevated);
+    color: var(--color-text-secondary);
     font-size: 12px;
     font-family: inherit;
     font-weight: 500;
@@ -542,7 +544,7 @@
     transition: all 0.12s ease;
   }
   .btn-edit-cancel:hover {
-    background: #f5f5f7;
+    background: var(--color-surface);
   }
   .add-filter {
     display: flex;
@@ -551,32 +553,32 @@
   .add-filter input {
     flex: 1;
     padding: 6px 10px;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     font-size: 13px;
     font-family: inherit;
-    background: #f5f5f7;
-    color: #1d1d1f;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
     outline: none;
     transition: all 0.15s ease;
   }
   .add-filter input:focus {
-    border-color: #0071e3;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+    border-color: var(--color-accent);
+    background: var(--color-elevated);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
   }
   .add-filter input::placeholder {
-    color: #aeaeb2;
+    color: var(--color-text-tertiary);
   }
   .save-row {
     display: flex;
     align-items: center;
     gap: 12px;
     padding-top: 20px;
-    border-top: 1px solid #e5e5e5;
+    border-top: 1px solid var(--color-border);
   }
   .save-message {
     font-size: 13px;
-    color: #34c759;
+    color: var(--color-success);
   }
 </style>
