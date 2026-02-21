@@ -196,30 +196,22 @@ pub fn get_api_token() -> Result<String, String> {
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read token file: {}", e))?;
 
-    // Try v2 JSON format first, then fall back to v1 hex format
-    let token = if content.trim_start().starts_with('{') {
-        decrypt_v2(&content)?
-    } else {
-        decrypt_v1(&content)?
-    };
+    // Only accept v2 JSON format. Reject anything else.
+    let encrypted: EncryptedData = serde_json::from_str(content.trim())
+        .map_err(|_| "Invalid token file format. Please re-save your API token.".to_string())?;
 
-    // Update cache
-    if let Ok(mut cache) = CACHED_TOKEN.lock() {
-        *cache = Some(token.clone());
+    if encrypted.version != 2 {
+        return Err("Unsupported token format version. Please re-save your API token.".to_string());
     }
 
-    Ok(token)
-}
-
-/// Decrypt v2 format (JSON with Argon2id key derivation)
-fn decrypt_v2(content: &str) -> Result<String, String> {
-    let encrypted: EncryptedData = serde_json::from_str(content)
-        .map_err(|e| format!("Invalid token format: {}", e))?;
-
     let nonce_bytes = hex::decode(&encrypted.nonce)
-        .map_err(|e| format!("Invalid nonce: {}", e))?;
+        .map_err(|_| "Corrupted token data".to_string())?;
     let ciphertext = hex::decode(&encrypted.ciphertext)
-        .map_err(|e| format!("Invalid ciphertext: {}", e))?;
+        .map_err(|_| "Corrupted token data".to_string())?;
+
+    if nonce_bytes.len() != 12 {
+        return Err("Corrupted token data".to_string());
+    }
 
     let salt = get_or_create_salt()?;
     let key = derive_key(&salt)?;
@@ -230,45 +222,15 @@ fn decrypt_v2(content: &str) -> Result<String, String> {
     let nonce = Nonce::from_slice(&nonce_bytes);
     let plaintext = cipher
         .decrypt(nonce, ciphertext.as_ref())
-        .map_err(|_| "Failed to decrypt token. Data may be corrupted.".to_string())?;
-
-    String::from_utf8(plaintext)
-        .map_err(|_| "Invalid token encoding".to_string())
-}
-
-/// Decrypt v1 format (raw hex with SHA-256 key derivation) for backward compatibility
-fn decrypt_v1(hex_content: &str) -> Result<String, String> {
-    use sha2::{Digest, Sha256};
-
-    let data = hex::decode(hex_content.trim())
-        .map_err(|e| format!("Invalid v1 token data: {}", e))?;
-
-    if data.len() < 13 {
-        return Err("Corrupted token data".to_string());
-    }
-
-    // Reproduce v1 key derivation
-    let mut hasher = Sha256::new();
-    hasher.update(b"jira-focus-v1-");
-    if let Ok(hostname) = hostname::get() {
-        hasher.update(hostname.as_encoded_bytes());
-    }
-    hasher.update(whoami::username().as_bytes());
-    let key: [u8; 32] = hasher.finalize().into();
-
-    let cipher = Aes256Gcm::new_from_slice(&key)
-        .map_err(|e| format!("Cipher init error: {}", e))?;
-
-    let nonce = Nonce::from_slice(&data[..12]);
-    let plaintext = cipher
-        .decrypt(nonce, &data[12..])
-        .map_err(|_| "Failed to decrypt v1 token.".to_string())?;
+        .map_err(|_| "Failed to decrypt token. Please re-save your API token.".to_string())?;
 
     let token = String::from_utf8(plaintext)
         .map_err(|_| "Invalid token encoding".to_string())?;
 
-    // Auto-migrate to v2 format
-    let _ = save_api_token(&token);
+    // Update cache
+    if let Ok(mut cache) = CACHED_TOKEN.lock() {
+        *cache = Some(token.clone());
+    }
 
     Ok(token)
 }
