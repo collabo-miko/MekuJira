@@ -125,7 +125,7 @@ fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
 
     // アイコン中央の真下に配置（Physical座標）
     let x = icon_pos.x + (icon_size.width as i32 / 2) - (win_width / 2);
-    let y = icon_pos.y;
+    let y = icon_pos.y + icon_size.height as i32;
 
     let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
     panel.show();
