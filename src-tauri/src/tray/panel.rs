@@ -1,10 +1,6 @@
 use std::ptr::NonNull;
 
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager,
-};
+use tauri::{AppHandle, Manager};
 use tauri_nspanel::{
     tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
 };
@@ -22,51 +18,8 @@ tauri_panel! {
     })
 }
 
-pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let dashboard_item =
-        MenuItem::with_id(app, "dashboard", "対象課題一覧", true, None::<&str>)?;
-    let settings_item = MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&dashboard_item, &settings_item, &quit_item])?;
-
-    // ポップアップウィンドウをNSPanel化
-    init_popup_panel(app);
-
-    TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
-        .icon_as_template(true)
-        .menu(&menu)
-        .show_menu_on_left_click(false)
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                rect,
-                ..
-            } = event
-            {
-                let app = tray.app_handle();
-                show_popup(app, rect);
-            }
-        })
-        .on_menu_event(|app, event| match event.id.as_ref() {
-            "dashboard" => {
-                open_dashboard(app);
-            }
-            "settings" => {
-                open_settings(app);
-            }
-            "quit" => {
-                app.exit(0);
-            }
-            _ => {}
-        })
-        .build(app)?;
-
-    Ok(())
-}
-
-fn init_popup_panel(app: &AppHandle) {
+/// ポップアップウィンドウをNSPanelに変換し、フルスクリーン表示と自動クローズを設定
+pub fn init_popup_panel(app: &AppHandle) {
     let window = match app.get_webview_window("popup") {
         Some(w) => w,
         None => return,
@@ -104,8 +57,8 @@ fn init_popup_panel(app: &AppHandle) {
     setup_workspace_listener(app);
 }
 
-fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
-    // パネルとウィンドウの両方を取得
+/// トレイアイコンのrect情報に基づいてポップアップを表示
+pub fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
     let panel = match app.get_webview_panel("popup") {
         Ok(p) => p,
         Err(_) => return,
@@ -187,40 +140,4 @@ fn setup_workspace_listener(app: &AppHandle) {
 
     // blockの所有権も維持
     std::mem::forget(block);
-}
-
-pub fn open_dashboard(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("dashboard") {
-        let _ = window.show();
-        let _ = window.set_focus();
-        return;
-    }
-
-    let _window = tauri::WebviewWindowBuilder::new(
-        app,
-        "dashboard",
-        tauri::WebviewUrl::App("/dashboard".into()),
-    )
-    .title("JIRA Focus - 対象課題一覧")
-    .inner_size(900.0, 650.0)
-    .resizable(true)
-    .build();
-}
-
-pub fn open_settings(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("settings") {
-        let _ = window.show();
-        let _ = window.set_focus();
-        return;
-    }
-
-    let _window = tauri::WebviewWindowBuilder::new(
-        app,
-        "settings",
-        tauri::WebviewUrl::App("/settings".into()),
-    )
-    .title("JIRA Focus - 設定")
-    .inner_size(600.0, 700.0)
-    .resizable(true)
-    .build();
 }
