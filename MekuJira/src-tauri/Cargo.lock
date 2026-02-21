@@ -1981,34 +1981,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jira-focus"
-version = "0.1.0"
-dependencies = [
- "aes-gcm",
- "argon2",
- "base64 0.22.1",
- "block2",
- "chrono",
- "hex",
- "hostname",
- "log",
- "objc2-app-kit",
- "objc2-foundation",
- "rand 0.8.5",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-nspanel",
- "tauri-plugin-autostart",
- "tauri-plugin-opener",
- "tokio",
- "urlencoding",
- "whoami",
-]
-
-[[package]]
 name = "jni"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2211,6 +2183,34 @@ name = "matches"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
+
+[[package]]
+name = "mekujira"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "argon2",
+ "base64 0.22.1",
+ "block2",
+ "chrono",
+ "hex",
+ "hostname",
+ "log",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "rand 0.8.5",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-nspanel",
+ "tauri-plugin-autostart",
+ "tauri-plugin-opener",
+ "tokio",
+ "urlencoding",
+ "whoami",
+]
 
 [[package]]
 name = "memchr"
