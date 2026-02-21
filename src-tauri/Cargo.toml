@@ -30,3 +30,4 @@ whoami = "1"
 chrono = { version = "0.4", features = ["serde"] }
 log = "0.4"
 urlencoding = "2"
+tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }

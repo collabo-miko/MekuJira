@@ -27,6 +27,7 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .plugin(tauri_nspanel::init())
         .invoke_handler(tauri::generate_handler![
             commands::jira::get_issues,
             commands::jira::refresh_issues,

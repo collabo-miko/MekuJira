@@ -3,12 +3,31 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
+use tauri_nspanel::{
+    tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
+};
+
+tauri_panel! {
+    panel!(PopupPanel {
+        config: {
+            can_become_key_window: true,
+            is_floating_panel: true
+        }
+    })
+
+    panel_event!(PopupEventHandler {
+        window_did_resign_key(notification: &NSNotification) -> ()
+    })
+}
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let dashboard_item = MenuItem::with_id(app, "dashboard", "対象課題一覧", true, None::<&str>)?;
     let settings_item = MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&dashboard_item, &settings_item, &quit_item])?;
+
+    // ポップアップウィンドウをNSPanel化
+    init_popup_panel(app);
 
     TrayIconBuilder::new()
         .icon(app.default_window_icon().unwrap().clone())
@@ -44,18 +63,51 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn init_popup_panel(app: &AppHandle) {
+    let window = match app.get_webview_window("popup") {
+        Some(w) => w,
+        None => return,
+    };
+
+    let panel = match window.to_panel::<PopupPanel>() {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+
+    // フルスクリーンでも表示される設定
+    panel.set_level(PanelLevel::PopUpMenu.value());
+    panel.set_style_mask(StyleMask::empty().nonactivating_panel().into());
+    panel.set_collection_behavior(
+        CollectionBehavior::new()
+            .full_screen_auxiliary()
+            .can_join_all_spaces()
+            .into(),
+    );
+
+    // フォーカス外で自動クローズ
+    let handler = PopupEventHandler::new();
+    let handle = app.clone();
+    handler.window_did_resign_key(move |_notification| {
+        if let Ok(p) = handle.get_webview_panel("popup") {
+            p.hide();
+        }
+    });
+    panel.set_event_handler(Some(handler.as_ref()));
+}
+
 fn show_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
-    if let Some(window) = app.get_webview_window("popup") {
-        // Get current window size to center properly
-        let window_width = window
-            .outer_size()
-            .map(|s| s.width as f64)
-            .unwrap_or(380.0);
-        let x = tray_position.x - (window_width / 2.0);
-        let y = tray_position.y;
-        let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
-        let _ = window.show();
-        let _ = window.set_focus();
+    if let Ok(panel) = app.get_webview_panel("popup") {
+        // Get window size for centering
+        if let Some(window) = app.get_webview_window("popup") {
+            let window_width = window
+                .outer_size()
+                .map(|s| s.width as f64)
+                .unwrap_or(380.0);
+            let x = tray_position.x - (window_width / 2.0);
+            let y = tray_position.y;
+            let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
+        }
+        panel.show();
     }
 }
 
