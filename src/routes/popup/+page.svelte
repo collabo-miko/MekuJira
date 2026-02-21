@@ -13,6 +13,7 @@
 
   let appSettings = $state<AppSettings | null>(null);
   let bookmarks = $state<BookmarkedIssue[]>([]);
+  let readyToHide = false;
 
   onMount(async () => {
     try {
@@ -36,8 +37,10 @@
           appSettings = await getSettings();
           bookmarks = await getBookmarks();
         } catch {}
-      } else {
-        // フォーカスを失ったらポップアップを非表示
+        // フォーカスを得たら、次のフォーカスロスで非表示にする準備
+        setTimeout(() => { readyToHide = true; }, 200);
+      } else if (readyToHide) {
+        readyToHide = false;
         await currentWindow.hide();
       }
     });

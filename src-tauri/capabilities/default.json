@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for all windows",
-  "windows": ["popup", "widget", "settings"],
+  "windows": ["popup", "widget", "settings", "dashboard"],
   "permissions": [
     "core:default",
     "core:window:allow-close",
