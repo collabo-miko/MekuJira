@@ -6,7 +6,7 @@ use tauri::{
     AppHandle, Manager,
 };
 use tauri_nspanel::{
-    objc2, tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
+    tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
 };
 
 tauri_panel! {
@@ -105,6 +105,7 @@ fn init_popup_panel(app: &AppHandle) {
 }
 
 fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
+    // パネルとウィンドウの両方を取得
     let panel = match app.get_webview_panel("popup") {
         Ok(p) => p,
         Err(_) => return,
@@ -114,37 +115,19 @@ fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
         None => return,
     };
 
-    // ウィンドウサイズ取得
-    let win_size = window
+    // Physical座標を取得（TrayIconEventのrectはPhysical座標）
+    let icon_pos = icon_rect.position.to_physical::<i32>(1.0);
+    let icon_size = icon_rect.size.to_physical::<u32>(1.0);
+    let win_width: i32 = window
         .outer_size()
-        .unwrap_or(tauri::PhysicalSize::new(380, 520));
+        .map(|s| s.width as i32)
+        .unwrap_or(380);
 
-    // スケールファクター取得
-    let scale_factor = window.scale_factor().unwrap_or(1.0);
+    // アイコン中央の真下に配置（Physical座標）
+    let x = icon_pos.x + (icon_size.width as i32 / 2) - (win_width / 2);
+    let y = icon_pos.y;
 
-    // tauri::Rect の position/size から Physical値を取得
-    let icon_phys_pos = icon_rect.position.to_physical::<f64>(scale_factor);
-    let icon_phys_size = icon_rect.size.to_physical::<f64>(scale_factor);
-
-    // Logical座標に変換
-    let icon_x = icon_phys_pos.x / scale_factor;
-    let icon_y = icon_phys_pos.y / scale_factor;
-    let icon_w = icon_phys_size.width / scale_factor;
-    let win_w = win_size.width as f64 / scale_factor;
-    let win_h = win_size.height as f64 / scale_factor;
-
-    // macOS座標系（左下原点）: アイコン中央の真下にポップアップを配置
-    let x = icon_x + (icon_w / 2.0) - (win_w / 2.0);
-    let y = icon_y - win_h;
-
-    // NSWindowのsetFrame:display:で直接位置設定（macOS座標系）
-    unsafe {
-        use tauri_nspanel::{NSPoint, NSRect, NSSize};
-        let ns_window: *mut tauri_nspanel::NSObject = window.ns_window().unwrap() as _;
-        let frame = NSRect::new(NSPoint::new(x, y), NSSize::new(win_w, win_h));
-        let _: () = objc2::msg_send![ns_window, setFrame: frame, display: false];
-    }
-
+    let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
     panel.show();
 }
 
