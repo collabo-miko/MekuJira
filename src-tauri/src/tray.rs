@@ -1,10 +1,13 @@
+use std::ptr::NonNull;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager,
 };
 use tauri_nspanel::{
-    tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
+    objc2, tauri_panel, CollectionBehavior, ManagerExt, NSPoint, NSRect, NSSize, PanelLevel,
+    StyleMask, WebviewWindowExt,
 };
 
 tauri_panel! {
@@ -21,7 +24,8 @@ tauri_panel! {
 }
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-    let dashboard_item = MenuItem::with_id(app, "dashboard", "対象課題一覧", true, None::<&str>)?;
+    let dashboard_item =
+        MenuItem::with_id(app, "dashboard", "対象課題一覧", true, None::<&str>)?;
     let settings_item = MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&dashboard_item, &settings_item, &quit_item])?;
@@ -38,12 +42,12 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
                 button_state: MouseButtonState::Up,
-                position,
+                rect,
                 ..
             } = event
             {
                 let app = tray.app_handle();
-                show_popup(app, position);
+                show_popup(app, rect);
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -84,7 +88,7 @@ fn init_popup_panel(app: &AppHandle) {
             .into(),
     );
 
-    // フォーカス外で自動クローズ
+    // window_did_resign_key: テキスト入力等でkey windowになった後のケースをカバー
     let handler = PopupEventHandler::new();
     let handle = app.clone();
     handler.window_did_resign_key(move |_notification| {
@@ -93,22 +97,113 @@ fn init_popup_panel(app: &AppHandle) {
         }
     });
     panel.set_event_handler(Some(handler.as_ref()));
+
+    // NSEventグローバルモニタ: パネル外クリックでパネルを閉じる
+    setup_global_mouse_monitor(app);
+
+    // NSWorkspace通知: 他のアプリがアクティブになったらパネルを閉じる
+    setup_workspace_listener(app);
 }
 
-fn show_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
-    if let Ok(panel) = app.get_webview_panel("popup") {
-        // Get window size for centering
-        if let Some(window) = app.get_webview_window("popup") {
-            let window_width = window
-                .outer_size()
-                .map(|s| s.width as f64)
-                .unwrap_or(380.0);
-            let x = tray_position.x - (window_width / 2.0);
-            let y = tray_position.y;
-            let _ = window.set_position(tauri::PhysicalPosition::new(x as i32, y as i32));
-        }
-        panel.show();
+fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
+    let panel = match app.get_webview_panel("popup") {
+        Ok(p) => p,
+        Err(_) => return,
+    };
+    let window = match app.get_webview_window("popup") {
+        Some(w) => w,
+        None => return,
+    };
+
+    // ウィンドウサイズ取得
+    let win_size = window
+        .outer_size()
+        .unwrap_or(tauri::PhysicalSize::new(380, 520));
+
+    // スケールファクター取得
+    let scale_factor = window.scale_factor().unwrap_or(1.0);
+
+    // Logical座標に変換
+    let icon_x = icon_rect.position.x / scale_factor;
+    let icon_y = icon_rect.position.y / scale_factor;
+    let icon_w = icon_rect.size.width / scale_factor;
+    let win_w = win_size.width as f64 / scale_factor;
+    let win_h = win_size.height as f64 / scale_factor;
+
+    // macOS座標系（左下原点）: アイコン中央の真下にポップアップを配置
+    let x = icon_x + (icon_w / 2.0) - (win_w / 2.0);
+    let y = icon_y - win_h;
+
+    // NSWindowのsetFrame:display:で直接位置設定（macOS座標系）
+    unsafe {
+        let ns_window: *mut tauri_nspanel::NSObject = window.ns_window().unwrap() as _;
+        let frame = NSRect::new(NSPoint::new(x, y), NSSize::new(win_w, win_h));
+        let _: () = objc2::msg_send![ns_window, setFrame: frame display: false];
     }
+
+    panel.show();
+}
+
+/// NSEventグローバルモニタ: アプリ外のマウスクリックでパネルを閉じる
+fn setup_global_mouse_monitor(app: &AppHandle) {
+    use objc2_app_kit::{NSEvent, NSEventMask};
+
+    let handle = app.clone();
+
+    let mask = NSEventMask::LeftMouseDown.union(NSEventMask::RightMouseDown);
+
+    let block =
+        block2::RcBlock::new(move |_event: NonNull<NSEvent>| {
+            if let Ok(panel) = handle.get_webview_panel("popup") {
+                if panel.is_visible() {
+                    panel.hide();
+                }
+            }
+        });
+
+    unsafe {
+        let _monitor =
+            NSEvent::addGlobalMonitorForEventsMatchingMask_handler(mask, &block);
+        // モニタの所有権を維持するためリーク（アプリ全体のライフタイム）
+        if let Some(monitor) = _monitor {
+            std::mem::forget(monitor);
+        }
+    }
+
+    // blockの所有権も維持
+    std::mem::forget(block);
+}
+
+/// NSWorkspace通知: 他のアプリがアクティブになったらパネルを閉じる
+fn setup_workspace_listener(app: &AppHandle) {
+    use objc2_app_kit::NSWorkspace;
+    use objc2_foundation::{NSNotification, NSString};
+
+    let handle = app.clone();
+
+    let block =
+        block2::RcBlock::new(move |_notif: NonNull<NSNotification>| {
+            if let Ok(panel) = handle.get_webview_panel("popup") {
+                if panel.is_visible() {
+                    panel.hide();
+                }
+            }
+        });
+
+    unsafe {
+        let workspace = NSWorkspace::sharedWorkspace();
+        let notification_center = workspace.notificationCenter();
+        let name = NSString::from_str("NSWorkspaceDidActivateApplicationNotification");
+
+        let observer = notification_center
+            .addObserverForName_object_queue_usingBlock(Some(&name), None, None, &block);
+
+        // observerの所有権を維持するためリーク
+        std::mem::forget(observer);
+    }
+
+    // blockの所有権も維持
+    std::mem::forget(block);
 }
 
 pub fn open_dashboard(app: &AppHandle) {
