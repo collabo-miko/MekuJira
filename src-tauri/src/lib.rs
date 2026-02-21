@@ -14,6 +14,11 @@ fn open_settings_window(app: tauri::AppHandle) {
     tray::open_settings(&app);
 }
 
+#[tauri::command]
+fn open_dashboard_window(app: tauri::AppHandle) {
+    tray::open_dashboard(&app);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -33,12 +38,12 @@ pub fn run() {
             commands::bookmarks::add_bookmark,
             commands::bookmarks::remove_bookmark,
             commands::bookmarks::toggle_bookmark,
-            commands::window::resize_popup,
             commands::settings::get_settings,
             commands::settings::save_settings,
             commands::settings::save_api_token,
             commands::settings::has_api_token,
             open_settings_window,
+            open_dashboard_window,
         ])
         .setup(|app| {
             // Initialize encrypted token storage

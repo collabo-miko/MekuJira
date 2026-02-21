@@ -1,13 +1,10 @@
 <script lang="ts">
-  import type { ViewMode } from "$lib/types";
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { invoke } from "@tauri-apps/api/core";
 
-  interface Props {
-    viewMode: ViewMode;
-    onModeChange: (mode: ViewMode) => void;
+  function openDashboard() {
+    invoke("open_dashboard_window");
   }
-  let { viewMode, onModeChange }: Props = $props();
 
   function openSettings() {
     invoke("open_settings_window");
@@ -21,44 +18,48 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="header" onmousedown={startDrag}>
   <span class="app-title">JIRA Focus</span>
-  <div class="tabs" onmousedown={(e) => e.stopPropagation()}>
+  <div class="actions" onmousedown={(e) => e.stopPropagation()}>
     <button
-      class="tab"
-      class:active={viewMode === "tracking"}
-      onclick={() => onModeChange("tracking")}
+      class="icon-btn"
+      onclick={openDashboard}
+      title="対象課題一覧"
     >
-      追跡
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect x="2" y="2" width="12" height="12" rx="2" />
+        <path d="M5 6h6M5 8.5h6M5 11h4" />
+      </svg>
     </button>
     <button
-      class="tab"
-      class:active={viewMode === "dashboard"}
-      onclick={() => onModeChange("dashboard")}
+      class="icon-btn"
+      onclick={openSettings}
+      title="設定"
     >
-      対象
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M6.86 2.07a1 1 0 0 1 2.28 0l.12.56a1 1 0 0 0 1.33.6l.52-.22a1 1 0 0 1 1.14 1.62l-.4.4a1 1 0 0 0 0 1.33l.4.4a1 1 0 0 1-1.14 1.62l-.52-.22a1 1 0 0 0-1.33.6l-.12.56a1 1 0 0 1-2.28 0l-.12-.56a1 1 0 0 0-1.33-.6l-.52.22a1 1 0 0 1-1.14-1.62l.4-.4a1 1 0 0 0 0-1.33l-.4-.4A1 1 0 0 1 4.89 2.4l.52.22a1 1 0 0 0 1.33-.6l.12-.56z"
+        />
+        <circle cx="8" cy="6" r="1.5" />
+      </svg>
     </button>
   </div>
-  <button
-    class="settings-btn"
-    onmousedown={(e) => e.stopPropagation()}
-    onclick={openSettings}
-    title="設定"
-  >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.4"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path
-        d="M6.86 2.07a1 1 0 0 1 2.28 0l.12.56a1 1 0 0 0 1.33.6l.52-.22a1 1 0 0 1 1.14 1.62l-.4.4a1 1 0 0 0 0 1.33l.4.4a1 1 0 0 1-1.14 1.62l-.52-.22a1 1 0 0 0-1.33.6l-.12.56a1 1 0 0 1-2.28 0l-.12-.56a1 1 0 0 0-1.33-.6l-.52.22a1 1 0 0 1-1.14-1.62l.4-.4a1 1 0 0 0 0-1.33l-.4-.4A1 1 0 0 1 4.89 2.4l.52.22a1 1 0 0 0 1.33-.6l.12-.56z"
-      />
-      <circle cx="8" cy="6" r="1.5" />
-    </svg>
-  </button>
 </div>
 
 <style>
@@ -81,36 +82,12 @@
     letter-spacing: -0.01em;
     flex-shrink: 0;
   }
-  .tabs {
+  .actions {
     display: flex;
     gap: 2px;
-    background: var(--color-surface);
-    border-radius: var(--radius-sm);
-    padding: 2px;
     -webkit-app-region: no-drag;
   }
-  .tab {
-    padding: 4px 14px;
-    border: none;
-    border-radius: calc(var(--radius-sm) - 2px);
-    background: none;
-    font-size: 14px;
-    font-family: inherit;
-    font-weight: 500;
-    color: var(--color-text-tertiary);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-  }
-  .tab:hover {
-    color: var(--color-text-secondary);
-  }
-  .tab.active {
-    background: var(--color-elevated);
-    color: var(--color-text-primary);
-    box-shadow: 0 1px 3px var(--color-shadow);
-  }
-  .settings-btn {
+  .icon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -122,10 +99,8 @@
     cursor: pointer;
     color: var(--color-text-tertiary);
     transition: all 0.12s ease;
-    -webkit-app-region: no-drag;
-    flex-shrink: 0;
   }
-  .settings-btn:hover {
+  .icon-btn:hover {
     background: var(--color-surface);
     color: var(--color-text-primary);
   }

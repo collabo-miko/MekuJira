@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { NormalizedIssue, IssueCache, FilterIssuesMap, ViewMode } from "$lib/types";
+import type { NormalizedIssue, IssueCache, FilterIssuesMap } from "$lib/types";
 
 export async function getIssues(): Promise<NormalizedIssue[]> {
   return invoke("get_issues");
@@ -23,8 +23,4 @@ export async function getAllFilterIssues(): Promise<FilterIssuesMap> {
 
 export async function refreshAllFilters(): Promise<FilterIssuesMap> {
   return invoke("refresh_all_filters");
-}
-
-export async function resizePopup(mode: ViewMode): Promise<void> {
-  return invoke("resize_popup", { mode });
 }

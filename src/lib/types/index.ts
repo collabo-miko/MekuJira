@@ -38,6 +38,4 @@ export interface IssueCache {
   issues: NormalizedIssue[];
 }
 
-export type ViewMode = 'tracking' | 'dashboard';
-
 export type FilterIssuesMap = Record<string, NormalizedIssue[]>;

@@ -5,9 +5,10 @@ use tauri::{
 };
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    let dashboard_item = MenuItem::with_id(app, "dashboard", "対象課題一覧", true, None::<&str>)?;
     let settings_item = MenuItem::with_id(app, "settings", "設定", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&settings_item, &quit_item])?;
+    let menu = Menu::with_items(app, &[&dashboard_item, &settings_item, &quit_item])?;
 
     TrayIconBuilder::new()
         .icon(app.default_window_icon().unwrap().clone())
@@ -26,6 +27,9 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
+            "dashboard" => {
+                open_dashboard(app);
+            }
             "settings" => {
                 open_settings(app);
             }
@@ -52,6 +56,24 @@ fn show_popup(app: &AppHandle, tray_position: tauri::PhysicalPosition<f64>) {
         let _ = window.show();
         let _ = window.set_focus();
     }
+}
+
+pub fn open_dashboard(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("dashboard") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let _window = tauri::WebviewWindowBuilder::new(
+        app,
+        "dashboard",
+        tauri::WebviewUrl::App("/dashboard".into()),
+    )
+    .title("JIRA Focus - 対象課題一覧")
+    .inner_size(900.0, 650.0)
+    .resizable(true)
+    .build();
 }
 
 pub fn open_settings(app: &AppHandle) {
