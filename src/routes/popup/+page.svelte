@@ -78,12 +78,17 @@
   function openSettings() {
     invoke("open_settings_window");
   }
+
+  function startDrag() {
+    getCurrentWindow().startDragging();
+  }
 </script>
 
 <div class="popup">
-  <div class="header">
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="header" onmousedown={startDrag}>
     <span class="app-title">JIRA Focus</span>
-    <button class="settings-btn" onclick={openSettings} title="設定">
+    <button class="settings-btn" onmousedown={(e) => e.stopPropagation()} onclick={openSettings} title="設定">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6.86 2.07a1 1 0 0 1 2.28 0l.12.56a1 1 0 0 0 1.33.6l.52-.22a1 1 0 0 1 1.14 1.62l-.4.4a1 1 0 0 0 0 1.33l.4.4a1 1 0 0 1-1.14 1.62l-.52-.22a1 1 0 0 0-1.33.6l-.12.56a1 1 0 0 1-2.28 0l-.12-.56a1 1 0 0 0-1.33-.6l-.52.22a1 1 0 0 1-1.14-1.62l.4-.4a1 1 0 0 0 0-1.33l-.4-.4A1 1 0 0 1 4.89 2.4l.52.22a1 1 0 0 0 1.33-.6l.12-.56z"/>
         <circle cx="8" cy="6" r="1.5"/>
@@ -126,6 +131,11 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 14px 0;
+    cursor: grab;
+    -webkit-app-region: drag;
+  }
+  .header:active {
+    cursor: grabbing;
   }
   .app-title {
     font-size: 13px;
@@ -145,6 +155,7 @@
     cursor: pointer;
     color: var(--color-text-tertiary);
     transition: all 0.12s ease;
+    -webkit-app-region: no-drag;
   }
   .settings-btn:hover {
     background: var(--color-surface);
