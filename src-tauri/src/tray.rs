@@ -6,8 +6,7 @@ use tauri::{
     AppHandle, Manager,
 };
 use tauri_nspanel::{
-    objc2, tauri_panel, CollectionBehavior, ManagerExt, NSPoint, NSRect, NSSize, PanelLevel,
-    StyleMask, WebviewWindowExt,
+    objc2, tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
 };
 
 tauri_panel! {
@@ -123,10 +122,14 @@ fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
     // スケールファクター取得
     let scale_factor = window.scale_factor().unwrap_or(1.0);
 
+    // tauri::Rect の position/size から Physical値を取得
+    let icon_phys_pos = icon_rect.position.to_physical::<f64>(scale_factor);
+    let icon_phys_size = icon_rect.size.to_physical::<f64>(scale_factor);
+
     // Logical座標に変換
-    let icon_x = icon_rect.position.x / scale_factor;
-    let icon_y = icon_rect.position.y / scale_factor;
-    let icon_w = icon_rect.size.width / scale_factor;
+    let icon_x = icon_phys_pos.x / scale_factor;
+    let icon_y = icon_phys_pos.y / scale_factor;
+    let icon_w = icon_phys_size.width / scale_factor;
     let win_w = win_size.width as f64 / scale_factor;
     let win_h = win_size.height as f64 / scale_factor;
 
@@ -136,9 +139,10 @@ fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
 
     // NSWindowのsetFrame:display:で直接位置設定（macOS座標系）
     unsafe {
+        use tauri_nspanel::{NSPoint, NSRect, NSSize};
         let ns_window: *mut tauri_nspanel::NSObject = window.ns_window().unwrap() as _;
         let frame = NSRect::new(NSPoint::new(x, y), NSSize::new(win_w, win_h));
-        let _: () = objc2::msg_send![ns_window, setFrame: frame display: false];
+        let _: () = objc2::msg_send![ns_window, setFrame: frame, display: false];
     }
 
     panel.show();
@@ -152,22 +156,19 @@ fn setup_global_mouse_monitor(app: &AppHandle) {
 
     let mask = NSEventMask::LeftMouseDown.union(NSEventMask::RightMouseDown);
 
-    let block =
-        block2::RcBlock::new(move |_event: NonNull<NSEvent>| {
-            if let Ok(panel) = handle.get_webview_panel("popup") {
-                if panel.is_visible() {
-                    panel.hide();
-                }
+    let block = block2::RcBlock::new(move |_event: NonNull<NSEvent>| {
+        if let Ok(panel) = handle.get_webview_panel("popup") {
+            if panel.is_visible() {
+                panel.hide();
             }
-        });
-
-    unsafe {
-        let _monitor =
-            NSEvent::addGlobalMonitorForEventsMatchingMask_handler(mask, &block);
-        // モニタの所有権を維持するためリーク（アプリ全体のライフタイム）
-        if let Some(monitor) = _monitor {
-            std::mem::forget(monitor);
         }
+    });
+
+    let _monitor =
+        unsafe { NSEvent::addGlobalMonitorForEventsMatchingMask_handler(mask, &block) };
+    // モニタの所有権を維持するためリーク（アプリ全体のライフタイム）
+    if let Some(monitor) = _monitor {
+        std::mem::forget(monitor);
     }
 
     // blockの所有権も維持
@@ -181,14 +182,13 @@ fn setup_workspace_listener(app: &AppHandle) {
 
     let handle = app.clone();
 
-    let block =
-        block2::RcBlock::new(move |_notif: NonNull<NSNotification>| {
-            if let Ok(panel) = handle.get_webview_panel("popup") {
-                if panel.is_visible() {
-                    panel.hide();
-                }
+    let block = block2::RcBlock::new(move |_notif: NonNull<NSNotification>| {
+        if let Ok(panel) = handle.get_webview_panel("popup") {
+            if panel.is_visible() {
+                panel.hide();
             }
-        });
+        }
+    });
 
     unsafe {
         let workspace = NSWorkspace::sharedWorkspace();
