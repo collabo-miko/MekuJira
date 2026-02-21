@@ -273,13 +273,13 @@
     margin-bottom: 28px;
   }
   h1 {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--color-text-primary);
     letter-spacing: -0.02em;
   }
   h2 {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-secondary);
     text-transform: uppercase;
@@ -287,7 +287,7 @@
     margin-bottom: 12px;
   }
   .section-hint {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--color-text-secondary);
     margin-bottom: 12px;
     margin-top: -4px;
@@ -301,7 +301,7 @@
   .form-group label {
     display: block;
     margin-bottom: 5px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--color-text-primary);
   }
@@ -313,7 +313,7 @@
     padding: 8px 12px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 15px;
     font-family: inherit;
     color: var(--color-text-primary);
     background: var(--color-surface);
@@ -336,7 +336,7 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--color-text-primary);
   }
   .toggle-label input[type="checkbox"] {
@@ -346,7 +346,7 @@
   }
   .token-badge {
     display: inline-block;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--color-success);
     background: var(--color-success-bg);
@@ -367,7 +367,7 @@
     border-radius: 8px;
     background: var(--color-elevated);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     font-weight: 500;
     color: var(--color-text-primary);
@@ -387,7 +387,7 @@
     background: var(--color-accent);
     color: #fff;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 15px;
     font-family: inherit;
     font-weight: 500;
     transition: all 0.12s ease;
@@ -400,7 +400,7 @@
     cursor: not-allowed;
   }
   .result {
-    font-size: 13px;
+    font-size: 14px;
   }
   .result.success {
     color: var(--color-success);
@@ -445,13 +445,13 @@
   }
   .filter-name {
     display: block;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--color-text-primary);
   }
   .filter-jql {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-secondary);
     margin-top: 2px;
     word-break: break-all;
@@ -496,7 +496,7 @@
     padding: 6px 10px;
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     color: var(--color-text-primary);
     background: var(--color-surface);
@@ -510,7 +510,7 @@
   }
   .edit-input.edit-jql {
     font-family: "SF Mono", "Menlo", monospace;
-    font-size: 12px;
+    font-size: 13px;
   }
   .edit-actions {
     display: flex;
@@ -522,7 +522,7 @@
     border-radius: 6px;
     background: var(--color-accent);
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;
@@ -537,7 +537,7 @@
     border-radius: 6px;
     background: var(--color-elevated);
     color: var(--color-text-secondary);
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;
@@ -555,7 +555,7 @@
     padding: 6px 10px;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     background: var(--color-surface);
     color: var(--color-text-primary);
@@ -578,7 +578,7 @@
     border-top: 1px solid var(--color-border);
   }
   .save-message {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-success);
   }
 </style>

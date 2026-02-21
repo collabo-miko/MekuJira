@@ -57,7 +57,7 @@
     border: none;
     background: var(--color-surface);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-primary);
     cursor: pointer;
@@ -81,7 +81,7 @@
     flex: 1;
   }
   .issue-count {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     color: var(--color-text-tertiary);
   }
@@ -90,7 +90,7 @@
   }
   .empty-section {
     padding: 16px 14px;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--color-text-tertiary);
     text-align: center;
   }

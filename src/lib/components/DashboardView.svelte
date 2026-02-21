@@ -61,7 +61,7 @@
     flex-shrink: 0;
   }
   .toolbar-label {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--color-text-tertiary);
   }
   .refresh-btn {
@@ -108,12 +108,12 @@
     gap: 8px;
   }
   .empty-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     color: var(--color-text-secondary);
   }
   .empty-hint {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--color-text-tertiary);
   }
 </style>

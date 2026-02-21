@@ -75,7 +75,7 @@
     cursor: grabbing;
   }
   .app-title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-text-secondary);
     letter-spacing: -0.01em;
@@ -94,7 +94,7 @@
     border: none;
     border-radius: calc(var(--radius-sm) - 2px);
     background: none;
-    font-size: 12px;
+    font-size: 13px;
     font-family: inherit;
     font-weight: 500;
     color: var(--color-text-tertiary);
