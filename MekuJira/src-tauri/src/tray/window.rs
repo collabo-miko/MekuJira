@@ -13,7 +13,7 @@ pub fn open_dashboard(app: &AppHandle) {
         "dashboard",
         tauri::WebviewUrl::App("/dashboard".into()),
     )
-    .title("JIRA Focus - 対象課題一覧")
+    .title("MekuJira - 対象課題一覧")
     .inner_size(900.0, 650.0)
     .resizable(true)
     .build();
@@ -32,7 +32,7 @@ pub fn open_settings(app: &AppHandle) {
         "settings",
         tauri::WebviewUrl::App("/settings".into()),
     )
-    .title("JIRA Focus - 設定")
+    .title("MekuJira - 設定")
     .inner_size(600.0, 700.0)
     .resizable(true)
     .build();

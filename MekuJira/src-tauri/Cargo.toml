@@ -1,12 +1,12 @@
 [package]
-name = "jira-focus"
+name = "mekujira"
 version = "0.1.0"
-description = "JIRA Focus - Desktop issue focus app"
+description = "MekuJira - Desktop JIRA focus app"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "jira_focus_lib"
+name = "mekujira_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

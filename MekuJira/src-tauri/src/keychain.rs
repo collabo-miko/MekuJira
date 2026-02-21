@@ -91,7 +91,7 @@ fn get_machine_identity() -> Vec<u8> {
     let mut identity = Vec::new();
 
     // Constant app identifier
-    identity.extend_from_slice(b"jira-focus-v2-");
+    identity.extend_from_slice(b"mekujira-v2-");
 
     // Try macOS IOPlatformUUID (stable across reboots, unique per machine)
     #[cfg(target_os = "macos")]

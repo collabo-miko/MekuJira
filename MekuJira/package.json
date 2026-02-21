@@ -1,7 +1,7 @@
 {
-  "name": "jira-focus",
+  "name": "mekujira",
   "version": "0.1.0",
-  "description": "JIRA Focus - Desktop issue focus app for macOS menu bar",
+  "description": "MekuJira - Desktop JIRA focus app for macOS menu bar",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
