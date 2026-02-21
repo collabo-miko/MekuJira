@@ -19,6 +19,9 @@
 
   let newFilterName = $state("");
   let newFilterJql = $state("");
+  let editingFilterId = $state<string | null>(null);
+  let editName = $state("");
+  let editJql = $state("");
 
   onMount(async () => {
     try {
@@ -85,6 +88,28 @@
       f.id === id ? { ...f, enabled: !f.enabled } : f,
     );
   }
+
+  function startEdit(id: string) {
+    const filter = settings.filters.find((f) => f.id === id);
+    if (!filter) return;
+    editingFilterId = id;
+    editName = filter.name;
+    editJql = filter.jql;
+  }
+
+  function cancelEdit() {
+    editingFilterId = null;
+    editName = "";
+    editJql = "";
+  }
+
+  function saveEdit() {
+    if (!editingFilterId || !editName || !editJql) return;
+    settings.filters = settings.filters.map((f) =>
+      f.id === editingFilterId ? { ...f, name: editName, jql: editJql } : f,
+    );
+    cancelEdit();
+  }
 </script>
 
 <div class="settings">
@@ -144,26 +169,55 @@
     {#if settings.filters.length > 0}
       <div class="filter-list">
         {#each settings.filters as filter (filter.id)}
-          <div class="filter-item" class:active={filter.enabled}>
-            <label class="filter-toggle">
-              <input
-                type="checkbox"
-                checked={filter.enabled}
-                onchange={() => toggleFilterEnabled(filter.id)}
-              />
-              <div class="filter-info">
-                <span class="filter-name">{filter.name}</span>
-                <code class="filter-jql">{filter.jql}</code>
+          {#if editingFilterId === filter.id}
+            <div class="filter-item editing">
+              <div class="edit-form">
+                <input
+                  class="edit-input"
+                  type="text"
+                  bind:value={editName}
+                  placeholder="フィルター名"
+                />
+                <input
+                  class="edit-input edit-jql"
+                  type="text"
+                  bind:value={editJql}
+                  placeholder="JQLクエリ"
+                />
+                <div class="edit-actions">
+                  <button class="btn-edit-save" onclick={saveEdit}>保存</button>
+                  <button class="btn-edit-cancel" onclick={cancelEdit}>キャンセル</button>
+                </div>
               </div>
-            </label>
-            {#if filter.id !== "default"}
-              <button class="remove-btn" onclick={() => removeFilter(filter.id)} title="削除">
-                <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5" fill="none">
-                  <path d="M3 3l6 6M9 3l-6 6"/>
+            </div>
+          {:else}
+            <div class="filter-item" class:active={filter.enabled}>
+              <label class="filter-toggle">
+                <input
+                  type="checkbox"
+                  checked={filter.enabled}
+                  onchange={() => toggleFilterEnabled(filter.id)}
+                />
+                <div class="filter-info">
+                  <span class="filter-name">{filter.name}</span>
+                  <code class="filter-jql">{filter.jql}</code>
+                </div>
+              </label>
+              <button class="edit-btn" onclick={() => startEdit(filter.id)} title="編集">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 1.5l2 2L4 10H2v-2z"/>
+                  <path d="M7 3l2 2"/>
                 </svg>
               </button>
-            {/if}
-          </div>
+              {#if filter.id !== "default"}
+                <button class="remove-btn" onclick={() => removeFilter(filter.id)} title="削除">
+                  <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5" fill="none">
+                    <path d="M3 3l6 6M9 3l-6 6"/>
+                  </svg>
+                </button>
+              {/if}
+            </div>
+          {/if}
         {/each}
       </div>
     {/if}
@@ -401,6 +455,7 @@
     word-break: break-all;
     font-family: "SF Mono", "Menlo", monospace;
   }
+  .edit-btn,
   .remove-btn {
     display: flex;
     align-items: center;
@@ -415,9 +470,79 @@
     border-radius: 4px;
     transition: all 0.12s ease;
   }
+  .edit-btn:hover {
+    background: rgba(0, 113, 227, 0.1);
+    color: #0071e3;
+  }
   .remove-btn:hover {
     background: rgba(255, 59, 48, 0.1);
     color: #ff3b30;
+  }
+  .filter-item.editing {
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #0071e3;
+  }
+  .edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .edit-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #1d1d1f;
+    background: #f5f5f7;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .edit-input:focus {
+    border-color: #0071e3;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
+  }
+  .edit-input.edit-jql {
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 12px;
+  }
+  .edit-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-edit-save {
+    padding: 4px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #0071e3;
+    color: #fff;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s ease;
+  }
+  .btn-edit-save:hover {
+    background: #0077ed;
+  }
+  .btn-edit-cancel {
+    padding: 4px 14px;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    background: #fff;
+    color: #6e6e73;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .btn-edit-cancel:hover {
+    background: #f5f5f7;
   }
   .add-filter {
     display: flex;
