@@ -29,7 +29,7 @@
     gap: 5px;
     padding: 2px 8px 2px 6px;
     border-radius: 100px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
     letter-spacing: 0;

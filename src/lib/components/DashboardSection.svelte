@@ -81,7 +81,7 @@
     flex: 1;
   }
   .issue-count {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 400;
     color: var(--color-text-tertiary);
   }
@@ -90,7 +90,7 @@
   }
   .empty-section {
     padding: 16px 14px;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
     text-align: center;
   }

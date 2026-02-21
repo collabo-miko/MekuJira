@@ -92,7 +92,7 @@
     margin-bottom: 3px;
   }
   .key {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-accent);
   }
@@ -100,7 +100,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--color-text-secondary);
   }
   .priority-dot {
@@ -124,7 +124,7 @@
     margin-top: 5px;
   }
   .assignee {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
   }
 </style>

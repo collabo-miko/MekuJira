@@ -287,7 +287,7 @@
     margin-bottom: 12px;
   }
   .section-hint {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     margin-bottom: 12px;
     margin-top: -4px;
@@ -346,7 +346,7 @@
   }
   .token-badge {
     display: inline-block;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--color-success);
     background: var(--color-success-bg);
@@ -451,7 +451,7 @@
   }
   .filter-jql {
     display: block;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--color-text-secondary);
     margin-top: 2px;
     word-break: break-all;
@@ -510,7 +510,7 @@
   }
   .edit-input.edit-jql {
     font-family: "SF Mono", "Menlo", monospace;
-    font-size: 13px;
+    font-size: 14px;
   }
   .edit-actions {
     display: flex;
@@ -522,7 +522,7 @@
     border-radius: 6px;
     background: var(--color-accent);
     color: #fff;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;
@@ -537,7 +537,7 @@
     border-radius: 6px;
     background: var(--color-elevated);
     color: var(--color-text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     font-weight: 500;
     cursor: pointer;

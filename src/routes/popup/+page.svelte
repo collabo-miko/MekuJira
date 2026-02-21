@@ -145,7 +145,7 @@
     padding: 10px 14px;
     background: var(--color-error-bg);
     color: var(--color-error);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.4;
     border-bottom: 1px solid var(--color-error-border);
     max-height: 100px;

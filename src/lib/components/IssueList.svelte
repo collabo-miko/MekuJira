@@ -44,7 +44,7 @@
     color: var(--color-text-secondary);
   }
   .empty-hint {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--color-text-tertiary);
   }
 </style>
