@@ -2,8 +2,9 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
+use argon2::Argon2;
 use rand::RngCore;
-use sha2::{Digest, Sha256};
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -12,6 +13,18 @@ static CACHED_TOKEN: Mutex<Option<String>> = Mutex::new(None);
 static DATA_DIR: Mutex<Option<PathBuf>> = Mutex::new(None);
 
 const TOKEN_FILENAME: &str = ".token.enc";
+const SALT_FILENAME: &str = ".token.salt";
+
+/// Encrypted token file format
+#[derive(Serialize, Deserialize)]
+struct EncryptedData {
+    /// Format version for future migration
+    version: u8,
+    /// Hex-encoded nonce (12 bytes)
+    nonce: String,
+    /// Hex-encoded ciphertext
+    ciphertext: String,
+}
 
 /// Initialize with the app data directory. Must be called once at startup.
 pub fn init(app_data_dir: PathBuf) {
@@ -32,22 +45,99 @@ fn token_path() -> Result<PathBuf, String> {
     Ok(get_data_dir()?.join(TOKEN_FILENAME))
 }
 
-/// Derive a 256-bit encryption key from machine-specific data.
-/// Uses the app identifier + hostname as seed material.
-fn derive_key() -> [u8; 32] {
-    let mut hasher = Sha256::new();
-    hasher.update(b"jira-focus-v1-");
-    // Use hostname as machine-specific entropy
-    if let Ok(hostname) = hostname::get() {
-        hasher.update(hostname.as_encoded_bytes());
+fn salt_path() -> Result<PathBuf, String> {
+    Ok(get_data_dir()?.join(SALT_FILENAME))
+}
+
+/// Get or create a persistent random salt (32 bytes).
+/// The salt is stored in a separate file and reused across token saves.
+fn get_or_create_salt() -> Result<[u8; 32], String> {
+    let path = salt_path()?;
+
+    if path.exists() {
+        let hex_salt = fs::read_to_string(&path)
+            .map_err(|e| format!("Failed to read salt: {}", e))?;
+        let salt_vec = hex::decode(hex_salt.trim())
+            .map_err(|e| format!("Invalid salt data: {}", e))?;
+        if salt_vec.len() == 32 {
+            let mut salt = [0u8; 32];
+            salt.copy_from_slice(&salt_vec);
+            return Ok(salt);
+        }
     }
-    // Add username for extra entropy
-    hasher.update(whoami::username().as_bytes());
-    hasher.finalize().into()
+
+    // Generate new salt
+    let mut salt = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut salt);
+
+    fs::create_dir_all(path.parent().unwrap())
+        .map_err(|e| format!("Failed to create dir: {}", e))?;
+    fs::write(&path, hex::encode(salt))
+        .map_err(|e| format!("Failed to write salt: {}", e))?;
+
+    // Restrict file permissions to owner only (macOS/Linux)
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
+    }
+
+    Ok(salt)
+}
+
+/// Collect machine-specific entropy for key derivation.
+/// Uses macOS hardware UUID if available, falls back to hostname + username.
+fn get_machine_identity() -> Vec<u8> {
+    let mut identity = Vec::new();
+
+    // Constant app identifier
+    identity.extend_from_slice(b"jira-focus-v2-");
+
+    // Try macOS IOPlatformUUID (stable across reboots, unique per machine)
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(output) = std::process::Command::new("ioreg")
+            .args(["-rd1", "-c", "IOPlatformExpertDevice"])
+            .output()
+        {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            if let Some(line) = stdout.lines().find(|l| l.contains("IOPlatformUUID")) {
+                identity.extend_from_slice(line.as_bytes());
+                return identity;
+            }
+        }
+    }
+
+    // Fallback: hostname + username
+    if let Ok(hostname) = hostname::get() {
+        identity.extend_from_slice(hostname.as_encoded_bytes());
+    }
+    identity.extend_from_slice(whoami::username().as_bytes());
+
+    identity
+}
+
+/// Derive a 256-bit encryption key using Argon2id.
+///
+/// Argon2id is resistant to:
+/// - GPU/ASIC brute force (memory-hard)
+/// - Side-channel attacks (hybrid mode)
+/// - Rainbow table attacks (uses random salt)
+fn derive_key(salt: &[u8; 32]) -> Result<[u8; 32], String> {
+    let machine_id = get_machine_identity();
+
+    let mut key = [0u8; 32];
+    Argon2::default()
+        .hash_password_into(&machine_id, salt, &mut key)
+        .map_err(|e| format!("Key derivation error: {}", e))?;
+
+    Ok(key)
 }
 
 pub fn save_api_token(token: &str) -> Result<(), String> {
-    let key = derive_key();
+    let salt = get_or_create_salt()?;
+    let key = derive_key(&salt)?;
+
     let cipher = Aes256Gcm::new_from_slice(&key)
         .map_err(|e| format!("Cipher init error: {}", e))?;
 
@@ -60,16 +150,27 @@ pub fn save_api_token(token: &str) -> Result<(), String> {
         .encrypt(nonce, token.as_bytes())
         .map_err(|e| format!("Encryption error: {}", e))?;
 
-    // Store as: nonce (12 bytes) || ciphertext
-    let mut data = Vec::with_capacity(12 + ciphertext.len());
-    data.extend_from_slice(&nonce_bytes);
-    data.extend_from_slice(&ciphertext);
+    let encrypted = EncryptedData {
+        version: 2,
+        nonce: hex::encode(nonce_bytes),
+        ciphertext: hex::encode(ciphertext),
+    };
 
     let path = token_path()?;
     fs::create_dir_all(path.parent().unwrap())
         .map_err(|e| format!("Failed to create dir: {}", e))?;
-    fs::write(&path, hex::encode(&data))
+
+    let json = serde_json::to_string(&encrypted)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+    fs::write(&path, &json)
         .map_err(|e| format!("Failed to write token: {}", e))?;
+
+    // Restrict file permissions to owner only
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
+    }
 
     // Update cache
     if let Ok(mut cache) = CACHED_TOKEN.lock() {
@@ -87,32 +188,20 @@ pub fn get_api_token() -> Result<String, String> {
         }
     }
 
-    // Read from encrypted file
     let path = token_path()?;
     if !path.exists() {
         return Err("No API token saved".to_string());
     }
 
-    let hex_data = fs::read_to_string(&path)
+    let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read token file: {}", e))?;
-    let data = hex::decode(hex_data.trim())
-        .map_err(|e| format!("Invalid token data: {}", e))?;
 
-    if data.len() < 13 {
-        return Err("Corrupted token data".to_string());
-    }
-
-    let key = derive_key();
-    let cipher = Aes256Gcm::new_from_slice(&key)
-        .map_err(|e| format!("Cipher init error: {}", e))?;
-
-    let nonce = Nonce::from_slice(&data[..12]);
-    let plaintext = cipher
-        .decrypt(nonce, &data[12..])
-        .map_err(|_| "Failed to decrypt token. Data may be corrupted.".to_string())?;
-
-    let token = String::from_utf8(plaintext)
-        .map_err(|_| "Invalid token encoding".to_string())?;
+    // Try v2 JSON format first, then fall back to v1 hex format
+    let token = if content.trim_start().starts_with('{') {
+        decrypt_v2(&content)?
+    } else {
+        decrypt_v1(&content)?
+    };
 
     // Update cache
     if let Ok(mut cache) = CACHED_TOKEN.lock() {
@@ -122,8 +211,69 @@ pub fn get_api_token() -> Result<String, String> {
     Ok(token)
 }
 
+/// Decrypt v2 format (JSON with Argon2id key derivation)
+fn decrypt_v2(content: &str) -> Result<String, String> {
+    let encrypted: EncryptedData = serde_json::from_str(content)
+        .map_err(|e| format!("Invalid token format: {}", e))?;
+
+    let nonce_bytes = hex::decode(&encrypted.nonce)
+        .map_err(|e| format!("Invalid nonce: {}", e))?;
+    let ciphertext = hex::decode(&encrypted.ciphertext)
+        .map_err(|e| format!("Invalid ciphertext: {}", e))?;
+
+    let salt = get_or_create_salt()?;
+    let key = derive_key(&salt)?;
+
+    let cipher = Aes256Gcm::new_from_slice(&key)
+        .map_err(|e| format!("Cipher init error: {}", e))?;
+
+    let nonce = Nonce::from_slice(&nonce_bytes);
+    let plaintext = cipher
+        .decrypt(nonce, ciphertext.as_ref())
+        .map_err(|_| "Failed to decrypt token. Data may be corrupted.".to_string())?;
+
+    String::from_utf8(plaintext)
+        .map_err(|_| "Invalid token encoding".to_string())
+}
+
+/// Decrypt v1 format (raw hex with SHA-256 key derivation) for backward compatibility
+fn decrypt_v1(hex_content: &str) -> Result<String, String> {
+    use sha2::{Digest, Sha256};
+
+    let data = hex::decode(hex_content.trim())
+        .map_err(|e| format!("Invalid v1 token data: {}", e))?;
+
+    if data.len() < 13 {
+        return Err("Corrupted token data".to_string());
+    }
+
+    // Reproduce v1 key derivation
+    let mut hasher = Sha256::new();
+    hasher.update(b"jira-focus-v1-");
+    if let Ok(hostname) = hostname::get() {
+        hasher.update(hostname.as_encoded_bytes());
+    }
+    hasher.update(whoami::username().as_bytes());
+    let key: [u8; 32] = hasher.finalize().into();
+
+    let cipher = Aes256Gcm::new_from_slice(&key)
+        .map_err(|e| format!("Cipher init error: {}", e))?;
+
+    let nonce = Nonce::from_slice(&data[..12]);
+    let plaintext = cipher
+        .decrypt(nonce, &data[12..])
+        .map_err(|_| "Failed to decrypt v1 token.".to_string())?;
+
+    let token = String::from_utf8(plaintext)
+        .map_err(|_| "Invalid token encoding".to_string())?;
+
+    // Auto-migrate to v2 format
+    let _ = save_api_token(&token);
+
+    Ok(token)
+}
+
 pub fn has_api_token() -> bool {
-    // Check cache first
     if let Ok(cache) = CACHED_TOKEN.lock() {
         if cache.is_some() {
             return true;
@@ -138,6 +288,12 @@ pub fn delete_api_token() -> Result<(), String> {
     if path.exists() {
         fs::remove_file(&path)
             .map_err(|e| format!("Failed to delete token: {}", e))?;
+    }
+
+    // Also clean up salt
+    let salt = salt_path()?;
+    if salt.exists() {
+        let _ = fs::remove_file(&salt);
     }
 
     if let Ok(mut cache) = CACHED_TOKEN.lock() {
