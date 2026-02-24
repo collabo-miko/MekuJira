@@ -76,7 +76,35 @@ echo "  tar.gz:      $TAR_GZ"
 echo "  sig:         $SIG"
 echo "  latest.json: $LATEST_JSON"
 echo ""
-echo "==> Next steps:"
-echo "  1. git tag v$VERSION && git push --tags"
-echo "  2. GitHub Releases で v$VERSION を作成"
-echo "  3. 上記ファイルをアップロード"
+
+# GitHub Releases にアップロード
+read -p "==> GitHub Releases に v$VERSION を作成してアップロードしますか？ [y/N] " CONFIRM
+if [ "$CONFIRM" = "y" ] || [ "$CONFIRM" = "Y" ]; then
+  if ! command -v gh &> /dev/null; then
+    echo "ERROR: gh (GitHub CLI) がインストールされていません"
+    echo "  brew install gh && gh auth login"
+    exit 1
+  fi
+
+  cd "$PROJECT_DIR/.."
+  git tag "v$VERSION" && git push --tags
+
+  UPLOAD_FILES=("$TAR_GZ" "$SIG" "$LATEST_JSON")
+  [ -n "$DMG" ] && UPLOAD_FILES+=("$DMG")
+
+  gh release create "v$VERSION" "${UPLOAD_FILES[@]}" \
+    --title "v$VERSION" \
+    --notes "Release v$VERSION"
+
+  echo ""
+  echo "==> v$VERSION を GitHub Releases にアップロードしました！"
+else
+  echo "==> スキップしました。手動でアップロードする場合:"
+  echo "  1. git tag v$VERSION && git push --tags"
+  echo "  2. gh release create v$VERSION \\"
+  [ -n "$DMG" ] && echo "       $DMG \\"
+  echo "       $TAR_GZ \\"
+  echo "       $SIG \\"
+  echo "       $LATEST_JSON \\"
+  echo "       --title \"v$VERSION\" --notes \"Release v$VERSION\""
+fi

@@ -64,13 +64,18 @@ npx tauri signer generate -w ~/.tauri/mekujira.key
 ### リリースビルド
 
 ```bash
-# 環境変数を設定
+# 秘密鍵を設定
 export TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/mekujira.key)
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD='your-password'
+
+# パスワードを設定（特殊文字 !$` 等を含む場合は read を使う）
+read -s TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
 # リリーススクリプトを実行
 ./scripts/release.sh
 ```
+
+> **Note**: `read -s` はパスワードを非表示で入力できます。シェルの特殊文字（`!`, `$`, `` ` `` 等）による問題を回避できます。
 
 スクリプトは以下を自動で行います:
 1. `tauri.conf.json` からバージョンを読み取り
@@ -81,15 +86,13 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD='your-password'
 
 1. `src-tauri/tauri.conf.json` の `version` を更新
 2. `./scripts/release.sh` でビルド
-3. タグを作成してプッシュ:
-   ```bash
-   git tag v0.2.0 && git push --tags
-   ```
-4. GitHub Releases で新しいリリースを作成し、以下をアップロード:
-   - `MekuJira_X.Y.Z_aarch64.dmg` — 初回インストール用
-   - `MekuJira.app.tar.gz` — 自動更新用アーカイブ
-   - `MekuJira.app.tar.gz.sig` — 署名ファイル
-   - `latest.json` — 自動更新エンドポイント
+3. ビルド完了後、スクリプトが GitHub Releases へのアップロードを確認します（`y` で自動実行）
+
+スクリプトが自動で行うこと:
+- `git tag vX.Y.Z && git push --tags`
+- `gh release create` で DMG + `.tar.gz` + `.sig` + `latest.json` をアップロード
+
+> **前提**: `gh` (GitHub CLI) がインストール・認証済みであること。未導入の場合: `brew install gh && gh auth login`
 
 ### チーム向けインストール手順（初回）
 
