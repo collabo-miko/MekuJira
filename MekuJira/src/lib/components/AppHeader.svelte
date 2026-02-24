@@ -17,7 +17,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="header" onmousedown={startDrag}>
-  <span class="app-title">JIRA Focus</span>
+  <span class="app-title">MekuJira</span>
   <div class="actions" onmousedown={(e) => e.stopPropagation()}>
     <button
       class="icon-btn"

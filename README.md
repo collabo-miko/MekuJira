@@ -25,3 +25,7 @@ cd MekuJira && npm install && npm run tauri dev
 cp -r template MyApp
 cd MyApp && npm install && npm run tauri dev
 ```
+
+## リリース
+
+MekuJira のリリース・配布手順は [MekuJira/README.md](MekuJira/README.md#リリース配布) を参照してください。
