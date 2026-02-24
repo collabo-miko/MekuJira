@@ -42,5 +42,13 @@
     "macOS": {
       "minimumSystemVersion": "13.0"
     }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/collabo-miko/nandemo/releases/latest/download/latest.json"
+      ],
+      "pubkey": "<PUBLIC_KEY_PLACEHOLDER>"
+    }
   }
 }

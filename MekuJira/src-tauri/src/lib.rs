@@ -16,6 +16,7 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_nspanel::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             commands::jira::get_issues,
             commands::jira::refresh_issues,

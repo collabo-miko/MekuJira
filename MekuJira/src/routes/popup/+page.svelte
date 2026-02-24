@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { listen } from "@tauri-apps/api/event";
+  import { check } from "@tauri-apps/plugin-updater";
   import AppHeader from "$lib/components/AppHeader.svelte";
   import TrackingView from "$lib/components/TrackingView.svelte";
   import { getBookmarks } from "$lib/api/bookmarks";
@@ -14,7 +15,21 @@
   let appSettings = $state<AppSettings | null>(null);
   let bookmarks = $state<BookmarkedIssue[]>([]);
 
+  async function checkForUpdates() {
+    try {
+      const update = await check();
+      if (update) {
+        console.log(`Update available: ${update.version}`);
+        await update.downloadAndInstall();
+      }
+    } catch (e) {
+      console.warn("Update check failed:", e);
+    }
+  }
+
   onMount(async () => {
+    checkForUpdates();
+
     try {
       bookmarks = await getBookmarks();
     } catch {}
