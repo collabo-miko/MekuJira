@@ -96,7 +96,7 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
 ### チーム向けインストール手順（初回）
 
-1. [GitHub Releases](https://github.com/collabo-miko/nandemo/releases) から最新の DMG をダウンロード
+1. [GitHub Releases](https://github.com/collabo-miko/MekuJira/releases) から最新の DMG をダウンロード
 2. DMG を開き、MekuJira.app を `/Applications` にドラッグ
 3. Gatekeeper を回避（コード署名なしのため）:
    ```bash

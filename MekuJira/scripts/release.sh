@@ -48,7 +48,7 @@ fi
 SIGNATURE=$(cat "$SIG")
 
 # latest.json 生成
-REPO="collabo-miko/nandemo"
+REPO="collabo-miko/MekuJira"
 TAR_GZ_FILENAME=$(basename "$TAR_GZ")
 PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
