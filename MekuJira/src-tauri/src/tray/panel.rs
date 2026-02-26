@@ -1,9 +1,20 @@
 use std::ptr::NonNull;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::{AppHandle, Manager};
 use tauri_nspanel::{
     tauri_panel, CollectionBehavior, ManagerExt, PanelLevel, StyleMask, WebviewWindowExt,
 };
+
+static PINNED: AtomicBool = AtomicBool::new(false);
+
+pub fn set_pinned(pinned: bool) {
+    PINNED.store(pinned, Ordering::Relaxed);
+}
+
+pub fn is_pinned() -> bool {
+    PINNED.load(Ordering::Relaxed)
+}
 
 tauri_panel! {
     panel!(PopupPanel {
@@ -44,8 +55,11 @@ pub fn init_popup_panel(app: &AppHandle) {
     let handler = PopupEventHandler::new();
     let handle = app.clone();
     handler.window_did_resign_key(move |_notification| {
-        if let Ok(p) = handle.get_webview_panel("popup") {
-            p.hide();
+        if !is_pinned() {
+            if let Ok(p) = handle.get_webview_panel("popup") {
+                p.hide();
+                set_tray_icon_template(&handle, true);
+            }
         }
     });
     panel.set_event_handler(Some(handler.as_ref()));
@@ -57,31 +71,48 @@ pub fn init_popup_panel(app: &AppHandle) {
     setup_workspace_listener(app);
 }
 
-/// トレイアイコンのrect情報に基づいてポップアップを表示
-pub fn show_popup(app: &AppHandle, icon_rect: tauri::Rect) {
+/// トレイアイコンのrect情報に基づいてポップアップを表示/非表示をトグル
+pub fn toggle_popup(app: &AppHandle, icon_rect: tauri::Rect) {
     let panel = match app.get_webview_panel("popup") {
         Ok(p) => p,
         Err(_) => return,
     };
-    let window = match app.get_webview_window("popup") {
-        Some(w) => w,
-        None => return,
-    };
 
-    // Physical座標を取得（TrayIconEventのrectはPhysical座標）
-    let icon_pos = icon_rect.position.to_physical::<i32>(1.0);
-    let icon_size = icon_rect.size.to_physical::<u32>(1.0);
-    let win_width: i32 = window
-        .outer_size()
-        .map(|s| s.width as i32)
-        .unwrap_or(380);
+    if panel.is_visible() {
+        // 表示中 → 非表示 + Pin OFF + アイコンをモノクロに
+        set_pinned(false);
+        panel.hide();
+        set_tray_icon_template(app, true);
+    } else {
+        // 非表示 → 表示 + アイコンをカラーに
+        let window = match app.get_webview_window("popup") {
+            Some(w) => w,
+            None => return,
+        };
 
-    // アイコン中央の真下に配置（Physical座標）
-    let x = icon_pos.x + (icon_size.width as i32 / 2) - (win_width / 2);
-    let y = icon_pos.y + icon_size.height as i32;
+        // Physical座標を取得（TrayIconEventのrectはPhysical座標）
+        let icon_pos = icon_rect.position.to_physical::<i32>(1.0);
+        let icon_size = icon_rect.size.to_physical::<u32>(1.0);
+        let win_width: i32 = window
+            .outer_size()
+            .map(|s| s.width as i32)
+            .unwrap_or(380);
 
-    let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
-    panel.show();
+        // アイコン中央の真下に配置（Physical座標）
+        let x = icon_pos.x + (icon_size.width as i32 / 2) - (win_width / 2);
+        let y = icon_pos.y + icon_size.height as i32;
+
+        let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
+        panel.show();
+        set_tray_icon_template(app, false);
+    }
+}
+
+/// トレイアイコンのtemplate表示を切り替え
+fn set_tray_icon_template(app: &AppHandle, is_template: bool) {
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_icon_as_template(is_template);
+    }
 }
 
 /// NSEventグローバルモニタ: アプリ外のマウスクリックでパネルを閉じる
@@ -94,8 +125,9 @@ fn setup_global_mouse_monitor(app: &AppHandle) {
 
     let block = block2::RcBlock::new(move |_event: NonNull<NSEvent>| {
         if let Ok(panel) = handle.get_webview_panel("popup") {
-            if panel.is_visible() {
+            if panel.is_visible() && !is_pinned() {
                 panel.hide();
+                set_tray_icon_template(&handle, true);
             }
         }
     });
@@ -120,8 +152,9 @@ fn setup_workspace_listener(app: &AppHandle) {
 
     let block = block2::RcBlock::new(move |_notif: NonNull<NSNotification>| {
         if let Ok(panel) = handle.get_webview_panel("popup") {
-            if panel.is_visible() {
+            if panel.is_visible() && !is_pinned() {
                 panel.hide();
+                set_tray_icon_template(&handle, true);
             }
         }
     });

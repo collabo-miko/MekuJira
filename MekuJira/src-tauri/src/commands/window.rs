@@ -9,3 +9,8 @@ pub fn open_settings_window(app: tauri::AppHandle) {
 pub fn open_dashboard_window(app: tauri::AppHandle) {
     window::open_dashboard(&app);
 }
+
+#[tauri::command]
+pub fn set_pinned(pinned: bool) {
+    crate::tray::panel::set_pinned(pinned);
+}

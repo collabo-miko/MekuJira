@@ -7,7 +7,7 @@
   let settings = $state<AppSettings>({
     jira: { domain: "", email: "" },
     filters: [],
-    polling_interval_secs: 60,
+    polling_interval_secs: 3600,
     auto_start: false,
   });
   let apiToken = $state("");
@@ -237,7 +237,7 @@
         type="number"
         bind:value={settings.polling_interval_secs}
         min="30"
-        max="600"
+        max="7200"
       />
     </div>
     <div class="form-group checkbox">

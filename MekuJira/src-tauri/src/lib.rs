@@ -34,6 +34,7 @@ pub fn run() {
             commands::settings::has_api_token,
             commands::window::open_settings_window,
             commands::window::open_dashboard_window,
+            commands::window::set_pinned,
         ])
         .setup(|app| {
             // 暗号化トークンストレージを初期化

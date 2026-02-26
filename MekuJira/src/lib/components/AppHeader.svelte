@@ -10,6 +10,13 @@
     invoke("open_settings_window");
   }
 
+  let pinned = $state(false);
+
+  function togglePin() {
+    pinned = !pinned;
+    invoke("set_pinned", { pinned });
+  }
+
   function startDrag() {
     getCurrentWindow().startDragging();
   }
@@ -19,6 +26,26 @@
 <div class="header" onmousedown={startDrag}>
   <span class="app-title">MekuJira</span>
   <div class="actions" onmousedown={(e) => e.stopPropagation()}>
+    <button
+      class="icon-btn"
+      class:pin-active={pinned}
+      onclick={togglePin}
+      title={pinned ? "固定解除" : "固定表示"}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill={pinned ? "currentColor" : "none"}
+        stroke="currentColor"
+        stroke-width="1.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M9.5 2.5L13.5 6.5L10 10L9.5 12.5L3.5 6.5L6 6L9.5 2.5Z" />
+        <path d="M3.5 12.5L6 10" />
+      </svg>
+    </button>
     <button
       class="icon-btn"
       onclick={openDashboard}
@@ -103,5 +130,8 @@
   .icon-btn:hover {
     background: var(--color-surface);
     color: var(--color-text-primary);
+  }
+  .icon-btn.pin-active {
+    color: var(--color-accent);
   }
 </style>

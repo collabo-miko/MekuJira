@@ -1,4 +1,4 @@
-mod panel;
+pub(crate) mod panel;
 pub mod window;
 
 use tauri::{
@@ -18,7 +18,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     // ポップアップウィンドウをNSPanel化
     panel::init_popup_panel(app);
 
-    TrayIconBuilder::new()
+    TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().unwrap().clone())
         .icon_as_template(true)
         .menu(&menu)
@@ -32,7 +32,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
             } = event
             {
                 let app = tray.app_handle();
-                panel::show_popup(app, rect);
+                panel::toggle_popup(app, rect);
             }
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
