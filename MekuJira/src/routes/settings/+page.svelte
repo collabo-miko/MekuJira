@@ -1,11 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { getVersion } from "@tauri-apps/api/app";
+  import { check } from "@tauri-apps/plugin-updater";
+  import { relaunch } from "@tauri-apps/plugin-process";
   import { getSettings, saveSettings, saveApiToken, hasApiToken } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
   import type { AppSettings } from "$lib/types";
 
   let appVersion = $state("");
+  let updateStatus = $state<"checking" | "latest" | "updating" | "ready" | "error" | "">("");
+  let updateError = $state("");
 
   let settings = $state<AppSettings>({
     jira: { domain: "", email: "" },
@@ -26,6 +30,24 @@
   let editName = $state("");
   let editJql = $state("");
 
+  async function checkForUpdates() {
+    updateStatus = "checking";
+    updateError = "";
+    try {
+      const update = await check();
+      if (update) {
+        updateStatus = "updating";
+        await update.downloadAndInstall();
+        updateStatus = "ready";
+      } else {
+        updateStatus = "latest";
+      }
+    } catch (e) {
+      updateStatus = "error";
+      updateError = String(e);
+    }
+  }
+
   onMount(async () => {
     try {
       appVersion = await getVersion();
@@ -34,6 +56,7 @@
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
+    checkForUpdates();
   });
 
   async function handleSave() {
@@ -121,6 +144,17 @@
     <h1>設定</h1>
     {#if appVersion}
       <span class="app-version">v{appVersion}</span>
+    {/if}
+    {#if updateStatus === "checking"}
+      <span class="update-status checking">更新を確認中...</span>
+    {:else if updateStatus === "latest"}
+      <span class="update-status latest">最新です</span>
+    {:else if updateStatus === "updating"}
+      <span class="update-status updating">ダウンロード中...</span>
+    {:else if updateStatus === "ready"}
+      <button class="update-status ready" onclick={() => relaunch()}>再起動して更新</button>
+    {:else if updateStatus === "error"}
+      <span class="update-status error" title={updateError}>更新確認に失敗</span>
     {/if}
   </header>
 
@@ -286,6 +320,35 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--color-text-tertiary);
+  }
+  .update-status {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 1px 8px;
+    border-radius: 100px;
+  }
+  .update-status.checking,
+  .update-status.updating {
+    color: var(--color-text-tertiary);
+  }
+  .update-status.latest {
+    color: var(--color-success);
+    background: var(--color-success-bg);
+  }
+  .update-status.ready {
+    color: #fff;
+    background: var(--color-accent);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.12s ease;
+  }
+  .update-status.ready:hover {
+    background: var(--color-accent-hover);
+  }
+  .update-status.error {
+    color: var(--color-error);
+    cursor: help;
   }
   h1 {
     font-size: 24px;
