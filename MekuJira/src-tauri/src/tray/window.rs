@@ -33,7 +33,7 @@ pub fn open_settings(app: &AppHandle) {
         tauri::WebviewUrl::App("/settings".into()),
     )
     .title("MekuJira - 設定")
-    .inner_size(600.0, 700.0)
+    .inner_size(600.0, 850.0)
     .resizable(true)
     .build();
 }

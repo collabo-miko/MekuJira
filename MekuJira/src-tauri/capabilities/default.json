@@ -17,6 +17,8 @@
     "core:window:allow-unminimize",
     "core:event:default",
     "opener:default",
-    "autostart:default"
+    "autostart:default",
+    "updater:default",
+    "process:allow-restart"
   ]
 }
