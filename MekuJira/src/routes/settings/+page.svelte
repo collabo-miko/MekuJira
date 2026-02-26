@@ -148,7 +148,7 @@
     {#if updateStatus === "checking"}
       <span class="update-status checking">更新を確認中...</span>
     {:else if updateStatus === "latest"}
-      <span class="update-status latest">最新です</span>
+      <span class="update-status latest">最新</span>
     {:else if updateStatus === "updating"}
       <span class="update-status updating">ダウンロード中...</span>
     {:else if updateStatus === "ready"}
