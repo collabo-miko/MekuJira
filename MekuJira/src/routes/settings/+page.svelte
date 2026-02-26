@@ -1,8 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { getVersion } from "@tauri-apps/api/app";
   import { getSettings, saveSettings, saveApiToken, hasApiToken } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
   import type { AppSettings } from "$lib/types";
+
+  let appVersion = $state("");
 
   let settings = $state<AppSettings>({
     jira: { domain: "", email: "" },
@@ -25,6 +28,7 @@
 
   onMount(async () => {
     try {
+      appVersion = await getVersion();
       settings = await getSettings();
       hasTokenState = await hasApiToken();
     } catch (e) {
@@ -115,6 +119,9 @@
 <div class="settings">
   <header class="page-header">
     <h1>設定</h1>
+    {#if appVersion}
+      <span class="app-version">v{appVersion}</span>
+    {/if}
   </header>
 
   <section>
@@ -270,7 +277,15 @@
     color: var(--color-text-primary);
   }
   .page-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
     margin-bottom: 28px;
+  }
+  .app-version {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
   }
   h1 {
     font-size: 24px;
