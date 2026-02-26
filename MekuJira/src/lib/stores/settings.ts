@@ -11,7 +11,7 @@ const defaultSettings: AppSettings = {
       enabled: true,
     },
   ],
-  polling_interval_secs: 60,
+  polling_interval_secs: 3600,
   auto_start: false,
 };
 
