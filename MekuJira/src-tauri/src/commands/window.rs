@@ -14,3 +14,8 @@ pub fn open_dashboard_window(app: tauri::AppHandle) {
 pub fn set_pinned(pinned: bool) {
     crate::tray::panel::set_pinned(pinned);
 }
+
+#[tauri::command]
+pub fn get_pinned() -> bool {
+    crate::tray::panel::is_pinned()
+}

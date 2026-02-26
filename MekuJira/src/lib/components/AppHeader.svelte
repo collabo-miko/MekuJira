@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getCurrentWindow } from "@tauri-apps/api/window";
   import { invoke } from "@tauri-apps/api/core";
+  import { onMount } from "svelte";
 
   function openDashboard() {
     invoke("open_dashboard_window");
@@ -11,6 +12,10 @@
   }
 
   let pinned = $state(false);
+
+  onMount(async () => {
+    pinned = await invoke<boolean>("get_pinned");
+  });
 
   function togglePin() {
     pinned = !pinned;
