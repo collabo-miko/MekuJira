@@ -82,7 +82,7 @@
       {/if}
     </div>
     <button class="refresh-btn" onclick={onRefresh} disabled={isLoading} title="全フィルター更新">
-      <svg class="icon" class:spinning={isLoading} width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <svg class="icon" class:spinning={isLoading} width="20" height="20" viewBox="0 0 16 16" fill="none">
         <path d="M13.65 2.35A8 8 0 1 0 16 8h-2a6 6 0 1 1-1.76-4.24L10 6h6V0l-2.35 2.35z" fill="currentColor"/>
       </svg>
     </button>
@@ -188,8 +188,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     background: none;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);

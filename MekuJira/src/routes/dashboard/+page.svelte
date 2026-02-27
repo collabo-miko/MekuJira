@@ -80,8 +80,8 @@
     <h1>対象課題一覧</h1>
     <button class="settings-btn" onclick={openSettings} title="設定">
       <svg
-        width="18"
-        height="18"
+        width="20"
+        height="20"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
