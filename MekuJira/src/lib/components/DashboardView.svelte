@@ -136,7 +136,7 @@
     display: flex;
     align-items: center;
     flex: 1;
-    max-width: 280px;
+    max-width: 480px;
     margin: 0 8px;
     padding: 0 8px;
     height: 28px;
