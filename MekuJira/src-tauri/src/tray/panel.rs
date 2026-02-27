@@ -79,8 +79,7 @@ pub fn toggle_popup(app: &AppHandle, icon_rect: tauri::Rect) {
     };
 
     if panel.is_visible() {
-        // 表示中 → 非表示 + Pin OFF + アイコンをモノクロに
-        set_pinned(false);
+        // 表示中 → 非表示 + アイコンをモノクロに
         panel.hide();
         set_tray_icon_template(app, true);
     } else {
