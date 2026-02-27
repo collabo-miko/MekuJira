@@ -32,7 +32,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="card" onclick={handleClick}>
+<div class="card" class:checked={isBookmarked} onclick={handleClick}>
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <label class="checkbox-wrapper" onclick={(e) => e.stopPropagation()}>
     <input type="checkbox" checked={isBookmarked} onchange={handleCheckbox} />
@@ -65,8 +65,16 @@
     transition: background 0.12s ease;
     border-bottom: 1px solid var(--color-border);
   }
+  .card.checked {
+    background: var(--color-accent-bg);
+    border-left: 3px solid var(--color-accent);
+    padding-left: 11px;
+  }
   .card:hover {
     background: var(--color-surface);
+  }
+  .card.checked:hover {
+    background: var(--color-accent-bg);
   }
   .checkbox-wrapper {
     display: flex;
