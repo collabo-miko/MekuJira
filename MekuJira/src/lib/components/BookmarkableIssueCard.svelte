@@ -58,7 +58,7 @@
 <style>
   .card {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
     padding: 10px 14px;
     cursor: pointer;
@@ -71,13 +71,12 @@
   .checkbox-wrapper {
     display: flex;
     align-items: center;
-    padding-top: 2px;
     cursor: pointer;
     flex-shrink: 0;
   }
   .checkbox-wrapper input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     accent-color: var(--color-accent);
     cursor: pointer;
   }
