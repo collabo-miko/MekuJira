@@ -36,6 +36,7 @@ pub fn run() {
             commands::window::open_settings_window,
             commands::window::open_dashboard_window,
             commands::window::set_pinned,
+            commands::window::get_pinned,
         ])
         .setup(|app| {
             // 暗号化トークンストレージを初期化
