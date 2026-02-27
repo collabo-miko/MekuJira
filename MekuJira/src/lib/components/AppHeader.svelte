@@ -38,8 +38,8 @@
       title={pinned ? "固定解除" : "固定表示"}
     >
       <svg
-        width="16"
-        height="16"
+        width="20"
+        height="20"
         viewBox="0 0 16 16"
         fill={pinned ? "currentColor" : "none"}
         stroke="currentColor"
@@ -57,8 +57,8 @@
       title="対象課題一覧"
     >
       <svg
-        width="16"
-        height="16"
+        width="20"
+        height="20"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
@@ -76,8 +76,8 @@
       title="設定"
     >
       <svg
-        width="16"
-        height="16"
+        width="20"
+        height="20"
         viewBox="0 0 16 16"
         fill="none"
         stroke="currentColor"
@@ -123,8 +123,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: none;
     border: none;
     border-radius: var(--radius-sm);
