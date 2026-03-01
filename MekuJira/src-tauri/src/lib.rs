@@ -5,6 +5,7 @@ mod scheduler;
 mod store;
 mod tray;
 
+use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -39,6 +40,10 @@ pub fn run() {
             commands::window::get_pinned,
         ])
         .setup(|app| {
+            // Dockにアイコンを表示しない（メニューバーアプリ）
+            let ns_app = unsafe { NSApplication::sharedApplication() };
+            unsafe { ns_app.setActivationPolicy(NSApplicationActivationPolicy::Accessory) };
+
             // 暗号化トークンストレージを初期化
             let app_data_dir = app
                 .path()
