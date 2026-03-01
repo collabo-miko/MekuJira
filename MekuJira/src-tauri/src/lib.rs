@@ -5,6 +5,8 @@ mod scheduler;
 mod store;
 mod tray;
 
+use objc2::MainThreadMarker;
+use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -39,6 +41,11 @@ pub fn run() {
             commands::window::get_pinned,
         ])
         .setup(|app| {
+            // Dockにアイコンを表示しない（メニューバーアプリ）
+            let mtm = MainThreadMarker::new().expect("must be on the main thread");
+            let ns_app = NSApplication::sharedApplication(mtm);
+            ns_app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
+
             // 暗号化トークンストレージを初期化
             let app_data_dir = app
                 .path()

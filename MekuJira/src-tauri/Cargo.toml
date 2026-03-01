@@ -1,6 +1,6 @@
 [package]
 name = "mekujira"
-version = "0.2.4"
+version = "0.2.5"
 description = "MekuJira - Desktop JIRA app"
 authors = ["you"]
 edition = "2021"
@@ -34,5 +34,6 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }
 block2 = "0.6"
-objc2-app-kit = { version = "0.3", features = ["block2", "NSEvent", "NSRunningApplication", "NSWorkspace"] }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = ["block2", "NSApplication", "NSEvent", "NSRunningApplication", "NSWorkspace"] }
 objc2-foundation = { version = "0.3", features = ["block2", "NSNotification", "NSString"] }
