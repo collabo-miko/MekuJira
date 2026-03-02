@@ -14,6 +14,7 @@
 
   let appSettings = $state<AppSettings | null>(null);
   let bookmarks = $state<BookmarkedIssue[]>([]);
+  let collapsed = $state(false);
 
   async function checkForUpdates() {
     try {
@@ -59,8 +60,10 @@
 </script>
 
 <div class="popup">
-  <AppHeader />
-  <TrackingView {bookmarks} />
+  <AppHeader bind:collapsed />
+  {#if !collapsed}
+    <TrackingView {bookmarks} />
+  {/if}
 </div>
 
 <style>

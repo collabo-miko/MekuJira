@@ -1,7 +1,14 @@
 <script lang="ts">
   import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { LogicalSize } from "@tauri-apps/api/dpi";
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+
+  const EXPANDED_HEIGHT = 520;
+  const COLLAPSED_HEIGHT = 50;
+  const WINDOW_WIDTH = 380;
+
+  let { collapsed = $bindable(false) }: { collapsed?: boolean } = $props();
 
   function openDashboard() {
     invoke("open_dashboard_window");
@@ -17,9 +24,22 @@
     pinned = await invoke<boolean>("get_pinned");
   });
 
-  function togglePin() {
+  async function togglePin() {
     pinned = !pinned;
     invoke("set_pinned", { pinned });
+    if (!pinned && collapsed) {
+      collapsed = false;
+      await getCurrentWindow().setSize(
+        new LogicalSize(WINDOW_WIDTH, EXPANDED_HEIGHT),
+      );
+    }
+  }
+
+  async function toggleCollapse() {
+    if (!pinned) return;
+    collapsed = !collapsed;
+    const height = collapsed ? COLLAPSED_HEIGHT : EXPANDED_HEIGHT;
+    await getCurrentWindow().setSize(new LogicalSize(WINDOW_WIDTH, height));
   }
 
   function startDrag() {
@@ -28,9 +48,9 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="header" onmousedown={startDrag}>
+<div class="header" onmousedown={startDrag} ondblclick={toggleCollapse}>
   <span class="app-title">MekuJira</span>
-  <div class="actions" onmousedown={(e) => e.stopPropagation()}>
+  <div class="actions" onmousedown={(e) => e.stopPropagation()} ondblclick={(e) => e.stopPropagation()}>
     <button
       class="icon-btn"
       class:pin-active={pinned}
