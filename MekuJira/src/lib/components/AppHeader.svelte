@@ -6,7 +6,6 @@
 
   const EXPANDED_HEIGHT = 520;
   const COLLAPSED_HEIGHT = 50;
-  const WINDOW_WIDTH = 380;
 
   let { collapsed = $bindable(false) }: { collapsed?: boolean } = $props();
 
@@ -24,13 +23,20 @@
     pinned = await invoke<boolean>("get_pinned");
   });
 
+  async function getCurrentWidth(): Promise<number> {
+    const size = await getCurrentWindow().outerSize();
+    const scale = await getCurrentWindow().scaleFactor();
+    return size.width / scale;
+  }
+
   async function togglePin() {
     pinned = !pinned;
     invoke("set_pinned", { pinned });
     if (!pinned && collapsed) {
       collapsed = false;
+      const width = await getCurrentWidth();
       await getCurrentWindow().setSize(
-        new LogicalSize(WINDOW_WIDTH, EXPANDED_HEIGHT),
+        new LogicalSize(width, EXPANDED_HEIGHT),
       );
     }
   }
@@ -38,8 +44,9 @@
   async function toggleCollapse() {
     if (!pinned) return;
     collapsed = !collapsed;
+    const width = await getCurrentWidth();
     const height = collapsed ? COLLAPSED_HEIGHT : EXPANDED_HEIGHT;
-    await getCurrentWindow().setSize(new LogicalSize(WINDOW_WIDTH, height));
+    await getCurrentWindow().setSize(new LogicalSize(width, height));
   }
 
   function startDrag() {
