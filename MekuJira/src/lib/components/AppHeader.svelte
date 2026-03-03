@@ -4,7 +4,6 @@
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
 
-  const EXPANDED_HEIGHT = 520;
   const COLLAPSED_HEIGHT = 50;
 
   let { collapsed = $bindable(false) }: { collapsed?: boolean } = $props();
@@ -18,15 +17,16 @@
   }
 
   let pinned = $state(false);
+  let savedHeight = 520;
 
   onMount(async () => {
     pinned = await invoke<boolean>("get_pinned");
   });
 
-  async function getCurrentWidth(): Promise<number> {
+  async function getCurrentLogicalSize(): Promise<{ width: number; height: number }> {
     const size = await getCurrentWindow().outerSize();
     const scale = await getCurrentWindow().scaleFactor();
-    return size.width / scale;
+    return { width: size.width / scale, height: size.height / scale };
   }
 
   async function togglePin() {
@@ -34,19 +34,23 @@
     invoke("set_pinned", { pinned });
     if (!pinned && collapsed) {
       collapsed = false;
-      const width = await getCurrentWidth();
+      const { width } = await getCurrentLogicalSize();
       await getCurrentWindow().setSize(
-        new LogicalSize(width, EXPANDED_HEIGHT),
+        new LogicalSize(width, savedHeight),
       );
     }
   }
 
   async function toggleCollapse() {
     if (!pinned) return;
+    const { width, height } = await getCurrentLogicalSize();
+    if (!collapsed) {
+      savedHeight = height;
+    }
     collapsed = !collapsed;
-    const width = await getCurrentWidth();
-    const height = collapsed ? COLLAPSED_HEIGHT : EXPANDED_HEIGHT;
-    await getCurrentWindow().setSize(new LogicalSize(width, height));
+    await getCurrentWindow().setSize(
+      new LogicalSize(width, collapsed ? COLLAPSED_HEIGHT : savedHeight),
+    );
   }
 
   function startDrag() {
