@@ -43,7 +43,7 @@ pub fn init_popup_panel(app: &AppHandle) {
 
     // フルスクリーンでも表示される設定
     panel.set_level(PanelLevel::PopUpMenu.value());
-    panel.set_style_mask(StyleMask::empty().nonactivating_panel().into());
+    panel.set_style_mask(StyleMask::empty().nonactivating_panel().resizable().into());
     panel.set_collection_behavior(
         CollectionBehavior::new()
             .full_screen_auxiliary()
