@@ -16,3 +16,7 @@ export async function removeBookmark(issueKey: string): Promise<void> {
 export async function toggleBookmark(issue: NormalizedIssue, filterId: string): Promise<boolean> {
   return invoke("toggle_bookmark", { issue, filterId });
 }
+
+export async function refreshBookmarks(): Promise<BookmarkedIssue[]> {
+  return invoke("refresh_bookmarks");
+}

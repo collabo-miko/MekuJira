@@ -31,6 +31,7 @@ pub fn run() {
             commands::bookmarks::add_bookmark,
             commands::bookmarks::remove_bookmark,
             commands::bookmarks::toggle_bookmark,
+            commands::bookmarks::refresh_bookmarks,
             commands::settings::get_settings,
             commands::settings::save_settings,
             commands::settings::save_api_token,

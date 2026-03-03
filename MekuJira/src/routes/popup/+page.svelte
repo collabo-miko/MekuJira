@@ -4,7 +4,7 @@
   import { check } from "@tauri-apps/plugin-updater";
   import AppHeader from "$lib/components/AppHeader.svelte";
   import TrackingView from "$lib/components/TrackingView.svelte";
-  import { getBookmarks } from "$lib/api/bookmarks";
+  import { getBookmarks, refreshBookmarks } from "$lib/api/bookmarks";
   import { getSettings } from "$lib/api/settings";
   import type {
     BookmarkedIssue,
@@ -15,6 +15,18 @@
   let appSettings = $state<AppSettings | null>(null);
   let bookmarks = $state<BookmarkedIssue[]>([]);
   let collapsed = $state(false);
+  let isRefreshing = $state(false);
+
+  async function handleRefresh() {
+    isRefreshing = true;
+    try {
+      bookmarks = await refreshBookmarks();
+    } catch (err) {
+      console.error("Failed to refresh bookmarks:", err);
+    } finally {
+      isRefreshing = false;
+    }
+  }
 
   async function checkForUpdates() {
     try {
@@ -62,7 +74,7 @@
 <div class="popup">
   <AppHeader bind:collapsed />
   {#if !collapsed}
-    <TrackingView {bookmarks} />
+    <TrackingView {bookmarks} onRefresh={handleRefresh} {isRefreshing} />
   {/if}
 </div>
 
