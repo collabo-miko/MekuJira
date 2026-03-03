@@ -2217,7 +2217,7 @@ checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
 
 [[package]]
 name = "mekujira"
-version = "0.2.1"
+version = "0.2.5"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -2227,6 +2227,7 @@ dependencies = [
  "hex",
  "hostname",
  "log",
+ "objc2",
  "objc2-app-kit",
  "objc2-foundation",
  "rand 0.8.5",

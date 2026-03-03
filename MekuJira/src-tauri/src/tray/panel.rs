@@ -103,6 +103,7 @@ pub fn toggle_popup(app: &AppHandle, icon_rect: tauri::Rect) {
 
         let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
         panel.show();
+        panel.make_key_and_order_front();
         set_tray_icon_template(app, false);
     }
 }
