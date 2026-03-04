@@ -43,7 +43,7 @@ pub fn init_popup_panel(app: &AppHandle) {
 
     // フルスクリーンでも表示される設定
     panel.set_level(PanelLevel::PopUpMenu.value());
-    panel.set_style_mask(StyleMask::empty().nonactivating_panel().into());
+    panel.set_style_mask(StyleMask::empty().nonactivating_panel().resizable().into());
     panel.set_collection_behavior(
         CollectionBehavior::new()
             .full_screen_auxiliary()
@@ -103,6 +103,7 @@ pub fn toggle_popup(app: &AppHandle, icon_rect: tauri::Rect) {
 
         let _ = window.set_position(tauri::PhysicalPosition::new(x, y));
         panel.show();
+        panel.make_key_and_order_front();
         set_tray_icon_template(app, false);
     }
 }

@@ -1,7 +1,12 @@
 <script lang="ts">
   import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { LogicalSize } from "@tauri-apps/api/dpi";
   import { invoke } from "@tauri-apps/api/core";
   import { onMount } from "svelte";
+
+  const COLLAPSED_HEIGHT = 50;
+
+  let { collapsed = $bindable(false) }: { collapsed?: boolean } = $props();
 
   function openDashboard() {
     invoke("open_dashboard_window");
@@ -12,14 +17,40 @@
   }
 
   let pinned = $state(false);
+  let savedHeight = 520;
 
   onMount(async () => {
     pinned = await invoke<boolean>("get_pinned");
   });
 
-  function togglePin() {
+  async function getCurrentLogicalSize(): Promise<{ width: number; height: number }> {
+    const size = await getCurrentWindow().outerSize();
+    const scale = await getCurrentWindow().scaleFactor();
+    return { width: size.width / scale, height: size.height / scale };
+  }
+
+  async function togglePin() {
     pinned = !pinned;
     invoke("set_pinned", { pinned });
+    if (!pinned && collapsed) {
+      collapsed = false;
+      const { width } = await getCurrentLogicalSize();
+      await getCurrentWindow().setSize(
+        new LogicalSize(width, savedHeight),
+      );
+    }
+  }
+
+  async function toggleCollapse() {
+    if (!pinned) return;
+    const { width, height } = await getCurrentLogicalSize();
+    if (!collapsed) {
+      savedHeight = height;
+    }
+    collapsed = !collapsed;
+    await getCurrentWindow().setSize(
+      new LogicalSize(width, collapsed ? COLLAPSED_HEIGHT : savedHeight),
+    );
   }
 
   function startDrag() {
@@ -28,9 +59,9 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="header" onmousedown={startDrag}>
+<div class="header" onmousedown={startDrag} ondblclick={toggleCollapse}>
   <span class="app-title">MekuJira</span>
-  <div class="actions" onmousedown={(e) => e.stopPropagation()}>
+  <div class="actions" onmousedown={(e) => e.stopPropagation()} ondblclick={(e) => e.stopPropagation()}>
     <button
       class="icon-btn"
       class:pin-active={pinned}
