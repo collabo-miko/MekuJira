@@ -5,21 +5,42 @@ mod scheduler;
 mod store;
 mod tray;
 
+#[cfg(target_os = "macos")]
 use objc2::MainThreadMarker;
+#[cfg(target_os = "macos")]
 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_autostart::init(
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init());
+
+    // macOS: NSPanel plugin
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_nspanel::init());
+    }
+
+    // autostart: プラットフォーム分岐
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
-        ))
-        .plugin(tauri_nspanel::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init())
+        ));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        builder = builder.plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ));
+    }
+
+    builder
         .invoke_handler(tauri::generate_handler![
             commands::jira::get_issues,
             commands::jira::refresh_issues,
@@ -42,10 +63,13 @@ pub fn run() {
             commands::window::get_pinned,
         ])
         .setup(|app| {
-            // Dockにアイコンを表示しない（メニューバーアプリ）
-            let mtm = MainThreadMarker::new().expect("must be on the main thread");
-            let ns_app = NSApplication::sharedApplication(mtm);
-            ns_app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
+            // macOS: Dockにアイコンを表示しない（メニューバーアプリ）
+            #[cfg(target_os = "macos")]
+            {
+                let mtm = MainThreadMarker::new().expect("must be on the main thread");
+                let ns_app = NSApplication::sharedApplication(mtm);
+                ns_app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
+            }
 
             // 暗号化トークンストレージを初期化
             let app_data_dir = app

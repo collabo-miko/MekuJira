@@ -15,13 +15,19 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&dashboard_item, &settings_item, &quit_item])?;
 
-    // ポップアップウィンドウをNSPanel化
+    // ポップアップウィンドウを初期化
     panel::init_popup_panel(app);
 
-    TrayIconBuilder::with_id("main")
+    let mut tray_builder = TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().unwrap().clone())
-        .icon_as_template(true)
-        .menu(&menu)
+        .menu(&menu);
+
+    #[cfg(target_os = "macos")]
+    {
+        tray_builder = tray_builder.icon_as_template(true);
+    }
+
+    tray_builder
         .show_menu_on_left_click(false)
         .on_tray_icon_event(|tray, event| {
             if let TrayIconEvent::Click {
