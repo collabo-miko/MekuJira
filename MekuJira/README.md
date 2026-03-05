@@ -1,21 +1,21 @@
 # MekuJira
 
-macOS メニューバーに常駐し、JIRA Cloud の課題を管理するデスクトップアプリ。
+macOS / Windows のシステムトレイに常駐し、JIRA Cloud の課題を管理するデスクトップアプリ。
 
 ## 機能
 
-- **メニューバー常駐**: トレイアイコンから左クリックでポップアップ表示（フルスクリーン対応）
+- **システムトレイ常駐**: トレイアイコンから左クリックでポップアップ表示（フルスクリーン対応）
 - **ブックマーク**: 集中する課題をピックアップしてポップアップに常時表示
 - **対象課題一覧**: JQLフィルタで課題を取得・表示（独立ウィンドウ）
 - **自動更新**: バックグラウンドポーリングで課題データを自動取得
-- **セキュア**: APIトークンはmacOS Keychainに暗号化保存
+- **セキュア**: APIトークンはAES-256-GCMで暗号化しローカルファイルに保存
 
 ## 技術スタック
 
 - **フレームワーク**: Tauri 2.x
 - **バックエンド**: Rust
 - **フロントエンド**: Svelte 5 + TypeScript (SvelteKit)
-- **対象OS**: macOS 13 (Ventura) 以降
+- **対象OS**: macOS 13+, Windows 10+
 - **JIRA**: Cloud (atlassian.net)、API Token (Basic Auth)
 
 ## セットアップ
@@ -24,7 +24,7 @@ macOS メニューバーに常駐し、JIRA Cloud の課題を管理するデス
 
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Node.js](https://nodejs.org/) (v18+)
-- macOS 13+
+- macOS 13+ または Windows 10+
 
 ### インストール
 
@@ -46,55 +46,47 @@ npm run tauri build
 
 ## リリース・配布
 
-### 初回セットアップ: Tauri署名鍵の生成
+### 初回セットアップ
 
-アプリ内自動更新のために、Tauri独自の署名鍵ペアが必要です（Apple Developer Accountとは無関係）。
+#### 1. Tauri署名鍵の生成
+
+アプリ内自動更新のために、Tauri独自の署名鍵ペアが必要です。
 
 ```bash
-# 鍵ペアを生成（パスワードを聞かれるので設定する）
 npx tauri signer generate -w ~/.tauri/mekujira.key
 ```
 
 生成されるファイル:
-- `~/.tauri/mekujira.key` — 秘密鍵（ビルド時に使用）
-- `~/.tauri/mekujira.key.pub` — 公開鍵（`tauri.conf.json` の `pubkey` に設定）
+- `~/.tauri/mekujira.key` — 秘密鍵
+- `~/.tauri/mekujira.key.pub` — 公開鍵（`tauri.conf.json` の `pubkey` に設定済み）
 
-公開鍵を `src-tauri/tauri.conf.json` の `plugins.updater.pubkey` に設定してください。
+#### 2. GitHub Secrets の設定
 
-### リリースビルド
+リポジトリの Settings → Secrets and variables → Actions で以下を登録:
 
-```bash
-# 秘密鍵を設定
-export TAURI_SIGNING_PRIVATE_KEY=$(cat ~/.tauri/mekujira.key)
+| Secret名 | 値 |
+|---|---|
+| `TAURI_SIGNING_PRIVATE_KEY` | `~/.tauri/mekujira.key` の内容 |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 鍵生成時に設定したパスワード |
 
-# パスワードを設定（特殊文字 !$` 等を含む場合は read を使う）
-read -s TAURI_SIGNING_PRIVATE_KEY_PASSWORD
-export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+#### 3. Workflow permissions の設定
 
-# リリーススクリプトを実行
-./scripts/release.sh
-```
+Settings → Actions → General → Workflow permissions で **Read and write permissions** を有効にしてください。
 
-> **Note**: `read -s` はパスワードを非表示で入力できます。シェルの特殊文字（`!`, `$`, `` ` `` 等）による問題を回避できます。
+### リリース手順
 
-スクリプトは以下を自動で行います:
-1. `tauri.conf.json` からバージョンを読み取り
-2. 署名付きビルド（DMG + `.tar.gz` + `.sig`）
-3. `latest.json` の自動生成
+1. `src-tauri/tauri.conf.json` と `src-tauri/Cargo.toml` の `version` を更新
+2. コミット & プッシュ
+3. タグを作成してプッシュ:
+   ```bash
+   git tag v0.X.Y && git push --tags
+   ```
 
-### GitHub Releases へのアップロード
+GitHub Actions が自動で macOS + Windows をビルドし、GitHub Releases にアップロードします。
 
-1. `src-tauri/tauri.conf.json` の `version` を更新
-2. `./scripts/release.sh` でビルド
-3. ビルド完了後、スクリプトが GitHub Releases へのアップロードを確認します（`y` で自動実行）
+## チーム向けインストール手順
 
-スクリプトが自動で行うこと:
-- `git tag vX.Y.Z && git push --tags`
-- `gh release create` で DMG + `.tar.gz` + `.sig` + `latest.json` をアップロード
-
-> **前提**: `gh` (GitHub CLI) がインストール・認証済みであること。未導入の場合: `brew install gh && gh auth login`
-
-### チーム向けインストール手順（初回）
+### macOS
 
 1. [GitHub Releases](https://github.com/collabo-miko/MekuJira/releases) から最新の DMG をダウンロード
 2. DMG を開き、MekuJira.app を `/Applications` にドラッグ
@@ -103,6 +95,12 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
    xattr -cr /Applications/MekuJira.app
    ```
 4. MekuJira を起動し、JIRA 接続設定を行う
+
+### Windows
+
+1. [GitHub Releases](https://github.com/collabo-miko/MekuJira/releases) から最新の `.exe` インストーラーをダウンロード
+2. インストーラーを実行
+3. MekuJira を起動し、JIRA 接続設定を行う
 
 ### 更新（2回目以降）
 

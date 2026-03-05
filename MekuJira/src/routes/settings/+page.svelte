@@ -284,7 +284,7 @@
     <div class="form-group checkbox">
       <label class="toggle-label">
         <input id="autostart" type="checkbox" bind:checked={settings.auto_start} />
-        <span>macOS起動時に自動起動</span>
+        <span>OS起動時に自動起動</span>
       </label>
     </div>
   </section>

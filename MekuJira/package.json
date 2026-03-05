@@ -1,6 +1,6 @@
 {
   "name": "mekujira",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "MekuJira - Desktop JIRA app for macOS menu bar",
   "type": "module",
   "scripts": {
