@@ -30,7 +30,7 @@ async fn search_issues_new(
         .json(&serde_json::json!({
             "jql": jql,
             "maxResults": 50,
-            "fields": ["key", "summary", "status", "priority", "assignee"]
+            "fields": ["key", "summary", "status", "priority", "assignee", "duedate"]
         }))
         .send()
         .await
@@ -45,7 +45,7 @@ async fn search_issues_legacy(
     jql: &str,
 ) -> Result<Vec<NormalizedIssue>, String> {
     let url = format!(
-        "https://{}/rest/api/3/search?jql={}&maxResults=50&fields=key,summary,status,priority,assignee",
+        "https://{}/rest/api/3/search?jql={}&maxResults=50&fields=key,summary,status,priority,assignee,duedate",
         domain,
         urlencoding::encode(jql)
     );
