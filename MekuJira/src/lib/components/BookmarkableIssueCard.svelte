@@ -20,6 +20,16 @@
 
   let dotColor = $derived(priorityColors[issue.priority] ?? "#aeaeb2");
 
+  let dueDateDisplay = $derived.by(() => {
+    if (!issue.due_date) return null;
+    const [, m, d] = issue.due_date.split("-");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(issue.due_date + "T00:00:00");
+    const overdue = due < today;
+    return { label: `${parseInt(m)}/${parseInt(d)}`, overdue };
+  });
+
   function handleClick() {
     openUrl(issue.url);
   }
@@ -50,6 +60,9 @@
       <StatusBadge status={issue.status} category={issue.status_category} />
       {#if issue.assignee}
         <span class="assignee">{issue.assignee}</span>
+      {/if}
+      {#if dueDateDisplay}
+        <span class="due-date" class:overdue={dueDateDisplay.overdue}>{dueDateDisplay.label}</span>
       {/if}
     </div>
   </div>
@@ -133,5 +146,13 @@
   .assignee {
     font-size: 14px;
     color: var(--color-text-tertiary);
+  }
+  .due-date {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+  }
+  .due-date.overdue {
+    color: #ff3b30;
+    font-weight: 600;
   }
 </style>

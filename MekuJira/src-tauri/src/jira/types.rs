@@ -30,6 +30,8 @@ pub struct JiraFields {
     pub status: Option<JiraStatus>,
     pub priority: Option<JiraPriority>,
     pub assignee: Option<JiraUser>,
+    #[serde(default)]
+    pub duedate: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,6 +79,7 @@ pub struct NormalizedIssue {
     pub status_category: String,
     pub priority: String,
     pub assignee: String,
+    pub due_date: Option<String>,
     pub url: String,
 }
 
@@ -110,6 +113,7 @@ impl NormalizedIssue {
                 .as_ref()
                 .map(|a| a.display_name.clone())
                 .unwrap_or_default(),
+            due_date: issue.fields.duedate.clone(),
             url: format!("https://{}/browse/{}", domain, issue.key),
         }
     }

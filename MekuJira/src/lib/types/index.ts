@@ -5,6 +5,7 @@ export interface NormalizedIssue {
   status_category: string;
   priority: string;
   assignee: string;
+  due_date: string | null;
   url: string;
 }
 
