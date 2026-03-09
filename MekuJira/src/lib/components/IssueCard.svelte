@@ -20,12 +20,12 @@
 
   let dueDateDisplay = $derived.by(() => {
     if (!issue.due_date) return null;
-    const [, m, d] = issue.due_date.split("-");
+    const [y, m, d] = issue.due_date.split("-");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const due = new Date(issue.due_date + "T00:00:00");
     const overdue = due < today;
-    return { label: `${parseInt(m)}/${parseInt(d)}`, overdue };
+    return { label: `${y}/${parseInt(m)}/${parseInt(d)}`, overdue };
   });
 
   function handleClick() {
@@ -117,7 +117,7 @@
   }
   .due-date {
     font-size: 12px;
-    color: var(--color-text-tertiary);
+    color: var(--color-text-secondary);
   }
   .due-date.overdue {
     color: #ff3b30;
