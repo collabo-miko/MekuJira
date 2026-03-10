@@ -5,7 +5,9 @@
   import { relaunch } from "@tauri-apps/plugin-process";
   import { getSettings, saveSettings, saveApiToken, hasApiToken } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
-  import type { AppSettings } from "$lib/types";
+  import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
+  import { openUrl } from "@tauri-apps/plugin-opener";
+  import type { AppSettings, Weekday, NotificationSchedule } from "$lib/types";
 
   let appVersion = $state("");
   let updateStatus = $state<"checking" | "latest" | "updating" | "ready" | "error" | "">("");
@@ -16,6 +18,7 @@
     filters: [],
     polling_interval_secs: 3600,
     auto_start: false,
+    notification_schedules: [],
   });
   let apiToken = $state("");
   let hasTokenState = $state(false);
@@ -26,6 +29,26 @@
 
   let newFilterName = $state("");
   let newFilterJql = $state("");
+
+  const allWeekdays: { key: Weekday; label: string }[] = [
+    { key: "Mon", label: "月" },
+    { key: "Tue", label: "火" },
+    { key: "Wed", label: "水" },
+    { key: "Thu", label: "木" },
+    { key: "Fri", label: "金" },
+    { key: "Sat", label: "土" },
+    { key: "Sun", label: "日" },
+  ];
+
+  let newNotifTime = $state("09:00");
+  let newNotifDays = $state<Weekday[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+  let newNotifMessage = $state("");
+  let editingNotifId = $state<string | null>(null);
+  let editNotifTime = $state("");
+  let editNotifDays = $state<Weekday[]>([]);
+  let editNotifMessage = $state("");
+  let notifPermission = $state<boolean | null>(null);
+
   let editingFilterId = $state<string | null>(null);
   let editName = $state("");
   let editJql = $state("");
@@ -48,6 +71,27 @@
     }
   }
 
+  async function checkNotifPermission() {
+    try {
+      notifPermission = await isPermissionGranted();
+    } catch {
+      notifPermission = null;
+    }
+  }
+
+  async function handleRequestPermission() {
+    try {
+      const result = await requestPermission();
+      notifPermission = result === "granted";
+    } catch {
+      notifPermission = null;
+    }
+  }
+
+  async function openNotifSettings() {
+    await openUrl("x-apple.systempreferences:com.apple.Notifications-Settings");
+  }
+
   onMount(async () => {
     try {
       appVersion = await getVersion();
@@ -56,6 +100,7 @@
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
+    checkNotifPermission();
     checkForUpdates();
   });
 
@@ -136,6 +181,77 @@
       f.id === editingFilterId ? { ...f, name: editName, jql: editJql } : f,
     );
     cancelEdit();
+  }
+
+  async function addNotifSchedule() {
+    if (!newNotifMessage || newNotifDays.length === 0) return;
+    if (notifPermission === false) {
+      await handleRequestPermission();
+    }
+    const id = `notif_${Date.now()}`;
+    settings.notification_schedules = [
+      ...settings.notification_schedules,
+      { id, enabled: true, time: newNotifTime, days: [...newNotifDays], message: newNotifMessage },
+    ];
+    newNotifMessage = "";
+    newNotifTime = "09:00";
+    newNotifDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  }
+
+  function removeNotifSchedule(id: string) {
+    settings.notification_schedules = settings.notification_schedules.filter((s) => s.id !== id);
+  }
+
+  function toggleNotifEnabled(id: string) {
+    settings.notification_schedules = settings.notification_schedules.map((s) =>
+      s.id === id ? { ...s, enabled: !s.enabled } : s,
+    );
+  }
+
+  function startNotifEdit(id: string) {
+    const s = settings.notification_schedules.find((s) => s.id === id);
+    if (!s) return;
+    editingNotifId = id;
+    editNotifTime = s.time;
+    editNotifDays = [...s.days];
+    editNotifMessage = s.message;
+  }
+
+  function cancelNotifEdit() {
+    editingNotifId = null;
+    editNotifTime = "";
+    editNotifDays = [];
+    editNotifMessage = "";
+  }
+
+  function saveNotifEdit() {
+    if (!editingNotifId || !editNotifMessage || editNotifDays.length === 0) return;
+    settings.notification_schedules = settings.notification_schedules.map((s) =>
+      s.id === editingNotifId
+        ? { ...s, time: editNotifTime, days: [...editNotifDays], message: editNotifMessage }
+        : s,
+    );
+    cancelNotifEdit();
+  }
+
+  function toggleNewNotifDay(day: Weekday) {
+    if (newNotifDays.includes(day)) {
+      newNotifDays = newNotifDays.filter((d) => d !== day);
+    } else {
+      newNotifDays = [...newNotifDays, day];
+    }
+  }
+
+  function toggleEditNotifDay(day: Weekday) {
+    if (editNotifDays.includes(day)) {
+      editNotifDays = editNotifDays.filter((d) => d !== day);
+    } else {
+      editNotifDays = [...editNotifDays, day];
+    }
+  }
+
+  function formatDays(days: Weekday[]): string {
+    return allWeekdays.filter((w) => days.includes(w.key)).map((w) => w.label).join("");
   }
 </script>
 
@@ -286,6 +402,98 @@
         <input id="autostart" type="checkbox" bind:checked={settings.auto_start} />
         <span>OS起動時に自動起動</span>
       </label>
+    </div>
+  </section>
+
+  <section>
+    <h2>通知スケジュール</h2>
+    <p class="section-hint">指定した時刻にリマインド通知を送信します</p>
+    {#if notifPermission === false}
+      <div class="notif-permission-banner">
+        <span>通知の権限が許可されていません</span>
+        <button class="btn-secondary" onclick={handleRequestPermission}>権限をリクエスト</button>
+        <button class="btn-secondary" onclick={openNotifSettings}>システム設定を開く</button>
+      </div>
+    {/if}
+    {#if settings.notification_schedules.length > 0}
+      <div class="notif-list">
+        {#each settings.notification_schedules as schedule (schedule.id)}
+          {#if editingNotifId === schedule.id}
+            <div class="notif-item editing">
+              <div class="edit-form">
+                <div class="notif-edit-row">
+                  <input class="edit-input notif-time-input" type="time" bind:value={editNotifTime} />
+                  <div class="weekday-picker">
+                    {#each allWeekdays as wd (wd.key)}
+                      <button
+                        class="weekday-btn"
+                        class:selected={editNotifDays.includes(wd.key)}
+                        onclick={() => toggleEditNotifDay(wd.key)}
+                      >{wd.label}</button>
+                    {/each}
+                  </div>
+                </div>
+                <input
+                  class="edit-input"
+                  type="text"
+                  bind:value={editNotifMessage}
+                  placeholder="メッセージ"
+                />
+                <div class="edit-actions">
+                  <button class="btn-edit-save" onclick={saveNotifEdit}>保存</button>
+                  <button class="btn-edit-cancel" onclick={cancelNotifEdit}>キャンセル</button>
+                </div>
+              </div>
+            </div>
+          {:else}
+            <div class="notif-item" class:active={schedule.enabled}>
+              <label class="notif-toggle">
+                <input
+                  type="checkbox"
+                  checked={schedule.enabled}
+                  onchange={() => toggleNotifEnabled(schedule.id)}
+                />
+                <div class="notif-info">
+                  <span class="notif-summary">
+                    <span class="notif-days">{formatDays(schedule.days)}</span>
+                    <span class="notif-time">{schedule.time}</span>
+                  </span>
+                  <span class="notif-message">{schedule.message}</span>
+                </div>
+              </label>
+              <button class="edit-btn" onclick={() => startNotifEdit(schedule.id)} title="編集">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 1.5l2 2L4 10H2v-2z"/>
+                  <path d="M7 3l2 2"/>
+                </svg>
+              </button>
+              <button class="remove-btn" onclick={() => removeNotifSchedule(schedule.id)} title="削除">
+                <svg width="12" height="12" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.5" fill="none">
+                  <path d="M3 3l6 6M9 3l-6 6"/>
+                </svg>
+              </button>
+            </div>
+          {/if}
+        {/each}
+      </div>
+    {/if}
+    <div class="notif-add">
+      <div class="notif-add-top">
+        <input class="notif-time-input" type="time" bind:value={newNotifTime} />
+        <div class="weekday-picker">
+          {#each allWeekdays as wd (wd.key)}
+            <button
+              class="weekday-btn"
+              class:selected={newNotifDays.includes(wd.key)}
+              onclick={() => toggleNewNotifDay(wd.key)}
+            >{wd.label}</button>
+          {/each}
+        </div>
+      </div>
+      <div class="notif-add-bottom">
+        <input type="text" bind:value={newNotifMessage} placeholder="メッセージ" />
+        <button class="btn-secondary" onclick={addNotifSchedule}>追加</button>
+      </div>
     </div>
   </section>
 
@@ -646,6 +854,171 @@
     box-shadow: 0 0 0 3px var(--color-focus-ring);
   }
   .add-filter input::placeholder {
+    color: var(--color-text-tertiary);
+  }
+  .notif-permission-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--color-warning-bg, #fff8e1);
+    border: 1px solid var(--color-warning-border, #ffe082);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--color-text-primary);
+  }
+  .notif-permission-banner span {
+    flex: 1;
+    font-weight: 500;
+  }
+  .notif-permission-banner .btn-secondary {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+  .notif-list {
+    margin-bottom: 12px;
+  }
+  .notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--color-surface);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: background 0.12s ease;
+  }
+  .notif-item.active {
+    background: var(--color-accent-bg);
+  }
+  .notif-item.editing {
+    padding: 12px;
+    background: var(--color-elevated);
+    border: 1px solid var(--color-accent);
+  }
+  .notif-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .notif-toggle input[type="checkbox"] {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-accent);
+    flex-shrink: 0;
+  }
+  .notif-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .notif-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .notif-days {
+    letter-spacing: 0.05em;
+  }
+  .notif-time {
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+  .notif-message {
+    display: block;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-top: 2px;
+  }
+  .notif-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notif-time-input {
+    width: 100px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: "SF Mono", "Menlo", monospace;
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .notif-time-input:focus {
+    border-color: var(--color-accent);
+    background: var(--color-elevated);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+  .weekday-picker {
+    display: flex;
+    gap: 2px;
+  }
+  .weekday-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s ease;
+  }
+  .weekday-btn:hover {
+    background: var(--color-elevated);
+  }
+  .weekday-btn.selected {
+    background: var(--color-accent);
+    color: #fff;
+    border-color: var(--color-accent);
+  }
+  .notif-add {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .notif-add-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notif-add-bottom {
+    display: flex;
+    gap: 8px;
+  }
+  .notif-add-bottom input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .notif-add-bottom input:focus {
+    border-color: var(--color-accent);
+    background: var(--color-elevated);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+  .notif-add-bottom input::placeholder {
     color: var(--color-text-tertiary);
   }
   .save-row {

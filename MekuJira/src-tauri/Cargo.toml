@@ -1,6 +1,6 @@
 [package]
 name = "mekujira"
-version = "0.2.8"
+version = "0.2.9"
 description = "MekuJira - Desktop JIRA app"
 authors = ["you"]
 edition = "2021"
@@ -32,6 +32,7 @@ log = "0.4"
 urlencoding = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+tauri-plugin-notification = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2.1" }

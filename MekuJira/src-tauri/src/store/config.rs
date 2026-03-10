@@ -8,6 +8,28 @@ pub struct AppConfig {
     pub filters: Vec<JqlFilter>,
     pub polling_interval_secs: u64,
     pub auto_start: bool,
+    #[serde(default)]
+    pub notification_schedules: Vec<NotificationSchedule>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum Weekday {
+    Mon,
+    Tue,
+    Wed,
+    Thu,
+    Fri,
+    Sat,
+    Sun,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct NotificationSchedule {
+    pub id: String,
+    pub enabled: bool,
+    pub time: String,
+    pub days: Vec<Weekday>,
+    pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +62,7 @@ impl Default for AppConfig {
             }],
             polling_interval_secs: 3600,
             auto_start: false,
+            notification_schedules: vec![],
         }
     }
 }
