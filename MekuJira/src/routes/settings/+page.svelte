@@ -5,6 +5,8 @@
   import { relaunch } from "@tauri-apps/plugin-process";
   import { getSettings, saveSettings, saveApiToken, hasApiToken } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
+  import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
+  import { openUrl } from "@tauri-apps/plugin-opener";
   import type { AppSettings, Weekday, NotificationSchedule } from "$lib/types";
 
   let appVersion = $state("");
@@ -45,6 +47,8 @@
   let editNotifTime = $state("");
   let editNotifDays = $state<Weekday[]>([]);
   let editNotifMessage = $state("");
+  let notifPermission = $state<boolean | null>(null);
+
   let editingFilterId = $state<string | null>(null);
   let editName = $state("");
   let editJql = $state("");
@@ -67,6 +71,27 @@
     }
   }
 
+  async function checkNotifPermission() {
+    try {
+      notifPermission = await isPermissionGranted();
+    } catch {
+      notifPermission = null;
+    }
+  }
+
+  async function handleRequestPermission() {
+    try {
+      const result = await requestPermission();
+      notifPermission = result === "granted";
+    } catch {
+      notifPermission = null;
+    }
+  }
+
+  async function openNotifSettings() {
+    await openUrl("x-apple.systempreferences:com.apple.Notifications-Settings");
+  }
+
   onMount(async () => {
     try {
       appVersion = await getVersion();
@@ -75,6 +100,7 @@
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
+    checkNotifPermission();
     checkForUpdates();
   });
 
@@ -379,6 +405,13 @@
   <section>
     <h2>通知スケジュール</h2>
     <p class="section-hint">指定した時刻にリマインド通知を送信します</p>
+    {#if notifPermission === false}
+      <div class="notif-permission-banner">
+        <span>通知の権限が許可されていません</span>
+        <button class="btn-secondary" onclick={handleRequestPermission}>権限をリクエスト</button>
+        <button class="btn-secondary" onclick={openNotifSettings}>システム設定を開く</button>
+      </div>
+    {/if}
     {#if settings.notification_schedules.length > 0}
       <div class="notif-list">
         {#each settings.notification_schedules as schedule (schedule.id)}
@@ -819,6 +852,27 @@
   }
   .add-filter input::placeholder {
     color: var(--color-text-tertiary);
+  }
+  .notif-permission-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--color-warning-bg, #fff8e1);
+    border: 1px solid var(--color-warning-border, #ffe082);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--color-text-primary);
+  }
+  .notif-permission-banner span {
+    flex: 1;
+    font-weight: 500;
+  }
+  .notif-permission-banner .btn-secondary {
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 4px 12px;
   }
   .notif-list {
     margin-bottom: 12px;
