@@ -183,8 +183,11 @@
     cancelEdit();
   }
 
-  function addNotifSchedule() {
+  async function addNotifSchedule() {
     if (!newNotifMessage || newNotifDays.length === 0) return;
+    if (notifPermission === false) {
+      await handleRequestPermission();
+    }
     const id = `notif_${Date.now()}`;
     settings.notification_schedules = [
       ...settings.notification_schedules,
