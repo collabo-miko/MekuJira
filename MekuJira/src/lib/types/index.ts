@@ -26,11 +26,22 @@ export interface JqlFilter {
   enabled: boolean;
 }
 
+export type Weekday = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
+
+export interface NotificationSchedule {
+  id: string;
+  enabled: boolean;
+  time: string;
+  days: Weekday[];
+  message: string;
+}
+
 export interface AppSettings {
   jira: JiraConfig;
   filters: JqlFilter[];
   polling_interval_secs: number;
   auto_start: boolean;
+  notification_schedules: NotificationSchedule[];
 }
 
 export interface IssueCache {

@@ -1,6 +1,7 @@
 mod commands;
 mod jira;
 mod keychain;
+mod notification;
 mod scheduler;
 mod store;
 mod tray;
@@ -16,7 +17,8 @@ pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_notification::init());
 
     // macOS: NSPanel plugin
     #[cfg(target_os = "macos")]
@@ -83,6 +85,9 @@ pub fn run() {
 
             // バックグラウンドポーリングを開始
             scheduler::start(app.handle().clone());
+
+            // 通知スケジューラーを開始
+            notification::start(app.handle().clone());
 
             Ok(())
         })
