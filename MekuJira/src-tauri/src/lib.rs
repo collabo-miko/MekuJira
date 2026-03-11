@@ -59,6 +59,7 @@ pub fn run() {
             commands::settings::save_settings,
             commands::settings::save_api_token,
             commands::settings::has_api_token,
+            commands::settings::test_notification,
             commands::window::open_settings_window,
             commands::window::open_dashboard_window,
             commands::window::set_pinned,

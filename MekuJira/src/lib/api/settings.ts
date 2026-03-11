@@ -16,3 +16,7 @@ export async function saveApiToken(token: string): Promise<void> {
 export async function hasApiToken(): Promise<boolean> {
   return invoke("has_api_token");
 }
+
+export async function testNotification(): Promise<void> {
+  return invoke("test_notification");
+}

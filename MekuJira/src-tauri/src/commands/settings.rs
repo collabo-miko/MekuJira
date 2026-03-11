@@ -1,5 +1,6 @@
 use tauri::AppHandle;
 use tauri::Manager;
+use tauri_plugin_notification::NotificationExt;
 
 use crate::keychain;
 use crate::store::config::{self, AppConfig};
@@ -30,4 +31,14 @@ pub async fn save_api_token(token: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn has_api_token() -> Result<bool, String> {
     Ok(keychain::has_api_token())
+}
+
+#[tauri::command]
+pub async fn test_notification(app: AppHandle) -> Result<(), String> {
+    app.notification()
+        .builder()
+        .title("MekuJira")
+        .body("テスト通知です。この通知が表示されていれば正常です。")
+        .show()
+        .map_err(|e| format!("通知の送信に失敗しました: {}", e))
 }

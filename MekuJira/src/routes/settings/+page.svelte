@@ -3,9 +3,8 @@
   import { getVersion } from "@tauri-apps/api/app";
   import { check } from "@tauri-apps/plugin-updater";
   import { relaunch } from "@tauri-apps/plugin-process";
-  import { getSettings, saveSettings, saveApiToken, hasApiToken } from "$lib/api/settings";
+  import { getSettings, saveSettings, saveApiToken, hasApiToken, testNotification } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
-  import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import type { AppSettings, Weekday, NotificationSchedule } from "$lib/types";
 
@@ -47,7 +46,7 @@
   let editNotifTime = $state("");
   let editNotifDays = $state<Weekday[]>([]);
   let editNotifMessage = $state("");
-  let notifPermission = $state<boolean | null>(null);
+  let notifTestResult = $state<"idle" | "sent" | "error">("idle");
 
   let editingFilterId = $state<string | null>(null);
   let editName = $state("");
@@ -71,25 +70,22 @@
     }
   }
 
-  async function checkNotifPermission() {
+  async function sendTestNotification() {
     try {
-      notifPermission = await isPermissionGranted();
+      await testNotification();
+      notifTestResult = "sent";
     } catch {
-      notifPermission = null;
-    }
-  }
-
-  async function handleRequestPermission() {
-    try {
-      const result = await requestPermission();
-      notifPermission = result === "granted";
-    } catch {
-      notifPermission = null;
+      notifTestResult = "error";
     }
   }
 
   async function openNotifSettings() {
-    await openUrl("x-apple.systempreferences:com.apple.Notifications-Settings");
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes("mac")) {
+      await openUrl("x-apple.systempreferences:com.apple.preference.notifications");
+    } else {
+      await openUrl("ms-settings:notifications");
+    }
   }
 
   onMount(async () => {
@@ -100,7 +96,6 @@
     } catch (e) {
       console.error("Failed to load settings:", e);
     }
-    checkNotifPermission();
     checkForUpdates();
   });
 
@@ -185,14 +180,15 @@
 
   async function addNotifSchedule() {
     if (!newNotifMessage || newNotifDays.length === 0) return;
-    if (notifPermission === false) {
-      await handleRequestPermission();
-    }
+    const isFirstSchedule = settings.notification_schedules.length === 0;
     const id = `notif_${Date.now()}`;
     settings.notification_schedules = [
       ...settings.notification_schedules,
       { id, enabled: true, time: newNotifTime, days: [...newNotifDays], message: newNotifMessage },
     ];
+    if (isFirstSchedule) {
+      await sendTestNotification();
+    }
     newNotifMessage = "";
     newNotifTime = "09:00";
     newNotifDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -408,13 +404,20 @@
   <section>
     <h2>通知スケジュール</h2>
     <p class="section-hint">指定した時刻にリマインド通知を送信します</p>
-    {#if notifPermission === false}
-      <div class="notif-permission-banner">
-        <span>通知の権限が許可されていません</span>
-        <button class="btn-secondary" onclick={handleRequestPermission}>権限をリクエスト</button>
-        <button class="btn-secondary" onclick={openNotifSettings}>システム設定を開く</button>
-      </div>
-    {/if}
+    <div class="notif-test-area">
+      <button class="btn-secondary" onclick={sendTestNotification}>テスト通知を送信</button>
+      {#if notifTestResult === "sent"}
+        <div class="notif-test-message">
+          <span>テスト通知を送信しました。通知が表示されない場合はシステム設定を確認してください。</span>
+          <button class="btn-secondary" onclick={openNotifSettings}>システム設定を開く</button>
+        </div>
+      {:else if notifTestResult === "error"}
+        <div class="notif-test-message error">
+          <span>通知の送信に失敗しました。システム設定を確認してください。</span>
+          <button class="btn-secondary" onclick={openNotifSettings}>システム設定を開く</button>
+        </div>
+      {/if}
+    </div>
     {#if settings.notification_schedules.length > 0}
       <div class="notif-list">
         {#each settings.notification_schedules as schedule (schedule.id)}
@@ -856,23 +859,35 @@
   .add-filter input::placeholder {
     color: var(--color-text-tertiary);
   }
-  .notif-permission-banner {
+  .notif-test-area {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .notif-test-area > .btn-secondary {
+    align-self: flex-start;
+  }
+  .notif-test-message {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: var(--color-warning-bg, #fff8e1);
-    border: 1px solid var(--color-warning-border, #ffe082);
+    background: var(--color-success-bg, #e8f5e9);
+    border: 1px solid var(--color-success, #4caf50);
     border-radius: 8px;
-    margin-bottom: 12px;
     font-size: 13px;
     color: var(--color-text-primary);
   }
-  .notif-permission-banner span {
+  .notif-test-message.error {
+    background: var(--color-warning-bg, #fff8e1);
+    border-color: var(--color-warning-border, #ffe082);
+  }
+  .notif-test-message span {
     flex: 1;
     font-weight: 500;
   }
-  .notif-permission-banner .btn-secondary {
+  .notif-test-message .btn-secondary {
     white-space: nowrap;
     font-size: 12px;
     padding: 4px 12px;
