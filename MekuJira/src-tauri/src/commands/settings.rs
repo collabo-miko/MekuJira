@@ -39,6 +39,7 @@ pub async fn test_notification(app: AppHandle) -> Result<(), String> {
         .builder()
         .title("MekuJira")
         .body("テスト通知です。この通知が表示されていれば正常です。")
+        .sound("default")
         .show()
         .map_err(|e| format!("通知の送信に失敗しました: {}", e))
 }

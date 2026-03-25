@@ -42,6 +42,7 @@ async fn notification_loop(app: tauri::AppHandle) {
                     .builder()
                     .title("MekuJira")
                     .body(&schedule.message)
+                    .sound(&schedule.sound)
                     .show();
             }
         }
