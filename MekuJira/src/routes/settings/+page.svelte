@@ -482,7 +482,7 @@
                     <span class="notif-time">{schedule.time}</span>
                   </span>
                   <span class="notif-message">{schedule.message}</span>
-                  <span class="notif-sound">{schedule.sound || "default"}</span>
+                  <span class="notif-sound">{soundOptions.find(o => o.value === schedule.sound)?.label ?? schedule.sound}</span>
                 </div>
               </label>
               <button class="edit-btn" onclick={() => startNotifEdit(schedule.id)} title="編集">
