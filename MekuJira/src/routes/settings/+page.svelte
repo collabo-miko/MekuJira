@@ -40,6 +40,7 @@
   ];
 
   const soundOptions: { value: string; label: string }[] = [
+    { value: "", label: "なし" },
     { value: "default", label: "デフォルト" },
     { value: "Ping", label: "Ping" },
     { value: "Glass", label: "Glass" },

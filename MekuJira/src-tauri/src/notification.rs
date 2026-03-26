@@ -37,13 +37,15 @@ async fn notification_loop(app: tauri::AppHandle) {
                 && schedule.time == current_time
                 && schedule.days.contains(&current_day)
             {
-                let _ = app
+                let mut builder = app
                     .notification()
                     .builder()
                     .title("MekuJira")
-                    .body(&schedule.message)
-                    .sound(&schedule.sound)
-                    .show();
+                    .body(&schedule.message);
+                if !schedule.sound.is_empty() {
+                    builder = builder.sound(&schedule.sound);
+                }
+                let _ = builder.show();
             }
         }
     }
