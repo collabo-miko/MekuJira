@@ -3,7 +3,7 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use argon2::Argon2;
-use rand::RngCore;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -68,7 +68,7 @@ fn get_or_create_salt() -> Result<[u8; 32], String> {
 
     // Generate new salt
     let mut salt = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut salt);
+    rand::rng().fill_bytes(&mut salt);
 
     fs::create_dir_all(path.parent().unwrap())
         .map_err(|e| format!("Failed to create dir: {}", e))?;
@@ -112,7 +112,8 @@ fn get_machine_identity() -> Vec<u8> {
     if let Ok(hostname) = hostname::get() {
         identity.extend_from_slice(hostname.as_encoded_bytes());
     }
-    identity.extend_from_slice(whoami::username().as_bytes());
+    let username = whoami::username().unwrap_or_default();
+    identity.extend_from_slice(username.as_bytes());
 
     identity
 }
@@ -143,7 +144,7 @@ pub fn save_api_token(token: &str) -> Result<(), String> {
 
     // Generate random 96-bit nonce
     let mut nonce_bytes = [0u8; 12];
-    rand::thread_rng().fill_bytes(&mut nonce_bytes);
+    rand::rng().fill_bytes(&mut nonce_bytes);
     let nonce = Nonce::from_slice(&nonce_bytes);
 
     let ciphertext = cipher
