@@ -112,7 +112,8 @@ fn get_machine_identity() -> Vec<u8> {
     if let Ok(hostname) = hostname::get() {
         identity.extend_from_slice(hostname.as_encoded_bytes());
     }
-    identity.extend_from_slice(whoami::username().as_bytes());
+    let username = whoami::username().unwrap_or_default();
+    identity.extend_from_slice(username.as_bytes());
 
     identity
 }
