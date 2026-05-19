@@ -1,6 +1,6 @@
 [package]
 name = "mekujira"
-version = "0.2.10"
+version = "0.2.12"
 description = "MekuJira - Desktop JIRA app"
 authors = ["you"]
 edition = "2021"
