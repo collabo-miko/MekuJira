@@ -6,6 +6,7 @@
   import { getSettings, saveSettings, saveApiToken, hasApiToken, deleteApiToken, testNotification } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
   import { openUrl } from "@tauri-apps/plugin-opener";
+  import { confirm } from "@tauri-apps/plugin-dialog";
   import type { AppSettings, Weekday, NotificationSchedule } from "$lib/types";
 
   let appVersion = $state("");
@@ -121,8 +122,9 @@
   let deleteTokenMessage = $state<string | null>(null);
 
   async function handleDeleteToken() {
-    const ok = window.confirm(
+    const ok = await confirm(
       "保存済みのAPIトークンを削除します。よろしいですか？\n削除後はJIRAへの接続ができなくなるため、再度トークンの登録が必要です。",
+      { title: "APIトークン削除の確認", kind: "warning" },
     );
     if (!ok) return;
     isDeletingToken = true;
