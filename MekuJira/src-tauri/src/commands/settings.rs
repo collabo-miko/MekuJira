@@ -34,6 +34,11 @@ pub async fn has_api_token() -> Result<bool, String> {
 }
 
 #[tauri::command]
+pub async fn delete_api_token() -> Result<(), String> {
+    keychain::delete_api_token()
+}
+
+#[tauri::command]
 pub async fn test_notification(app: AppHandle) -> Result<(), String> {
     app.notification()
         .builder()

@@ -3,7 +3,7 @@
   import { getVersion } from "@tauri-apps/api/app";
   import { check } from "@tauri-apps/plugin-updater";
   import { relaunch } from "@tauri-apps/plugin-process";
-  import { getSettings, saveSettings, saveApiToken, hasApiToken, testNotification } from "$lib/api/settings";
+  import { getSettings, saveSettings, saveApiToken, hasApiToken, deleteApiToken, testNotification } from "$lib/api/settings";
   import { testConnection } from "$lib/api/jira";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import type { AppSettings, Weekday, NotificationSchedule } from "$lib/types";
@@ -114,6 +114,29 @@
       saveMessage = `保存に失敗しました: ${e}`;
     } finally {
       isSaving = false;
+    }
+  }
+
+  let isDeletingToken = $state(false);
+  let deleteTokenMessage = $state<string | null>(null);
+
+  async function handleDeleteToken() {
+    const ok = window.confirm(
+      "保存済みのAPIトークンを削除します。よろしいですか？\n削除後はJIRAへの接続ができなくなるため、再度トークンの登録が必要です。",
+    );
+    if (!ok) return;
+    isDeletingToken = true;
+    deleteTokenMessage = null;
+    try {
+      await deleteApiToken();
+      hasTokenState = false;
+      apiToken = "";
+      testResult = null;
+      deleteTokenMessage = "APIトークンを削除しました";
+    } catch (e) {
+      deleteTokenMessage = `削除に失敗しました: ${e}`;
+    } finally {
+      isDeletingToken = false;
     }
   }
 
@@ -308,9 +331,23 @@
       <button class="btn-secondary" onclick={handleTest} disabled={isTesting}>
         {isTesting ? "テスト中..." : "接続テスト"}
       </button>
+      {#if hasTokenState}
+        <button
+          class="btn-danger"
+          onclick={handleDeleteToken}
+          disabled={isDeletingToken}
+        >
+          {isDeletingToken ? "削除中..." : "APIトークンを削除"}
+        </button>
+      {/if}
       {#if testResult}
         <span class="result" class:success={testResult.success} class:error={!testResult.success}>
           {testResult.message}
+        </span>
+      {/if}
+      {#if deleteTokenMessage}
+        <span class="result" class:success={!deleteTokenMessage.startsWith("削除に失敗")} class:error={deleteTokenMessage.startsWith("削除に失敗")}>
+          {deleteTokenMessage}
         </span>
       {/if}
     </div>
@@ -685,6 +722,26 @@
     background: var(--color-accent-hover);
   }
   .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-danger {
+    padding: 6px 16px;
+    border: 1px solid #c0392b;
+    border-radius: 8px;
+    background: transparent;
+    color: #c0392b;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.12s ease;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: #c0392b;
+    color: #fff;
+  }
+  .btn-danger:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
