@@ -17,6 +17,10 @@ export async function hasApiToken(): Promise<boolean> {
   return invoke("has_api_token");
 }
 
+export async function deleteApiToken(): Promise<void> {
+  return invoke("delete_api_token");
+}
+
 export async function testNotification(): Promise<void> {
   return invoke("test_notification");
 }

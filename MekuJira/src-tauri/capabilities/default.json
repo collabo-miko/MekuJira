@@ -20,6 +20,7 @@
     "autostart:default",
     "updater:default",
     "process:allow-restart",
-    "notification:default"
+    "notification:default",
+    "dialog:allow-confirm"
   ]
 }

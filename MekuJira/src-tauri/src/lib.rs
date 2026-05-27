@@ -18,7 +18,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_notification::init());
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init());
 
     // macOS: NSPanel plugin
     #[cfg(target_os = "macos")]
@@ -59,6 +60,7 @@ pub fn run() {
             commands::settings::save_settings,
             commands::settings::save_api_token,
             commands::settings::has_api_token,
+            commands::settings::delete_api_token,
             commands::settings::test_notification,
             commands::window::open_settings_window,
             commands::window::open_dashboard_window,

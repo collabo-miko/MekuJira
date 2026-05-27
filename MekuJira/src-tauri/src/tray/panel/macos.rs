@@ -132,8 +132,7 @@ fn setup_global_mouse_monitor(app: &AppHandle) {
         }
     });
 
-    let _monitor =
-        unsafe { NSEvent::addGlobalMonitorForEventsMatchingMask_handler(mask, &block) };
+    let _monitor = NSEvent::addGlobalMonitorForEventsMatchingMask_handler(mask, &block);
     // モニタの所有権を維持するためリーク（アプリ全体のライフタイム）
     if let Some(monitor) = _monitor {
         std::mem::forget(monitor);

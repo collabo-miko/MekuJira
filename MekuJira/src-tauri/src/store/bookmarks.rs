@@ -86,8 +86,3 @@ pub fn toggle(
         Ok(true)
     }
 }
-
-pub fn is_bookmarked(app_data_dir: &PathBuf, issue_key: &str) -> Result<bool, String> {
-    let store = load(app_data_dir)?;
-    Ok(store.bookmarked_issues.iter().any(|b| b.issue.key == issue_key))
-}
