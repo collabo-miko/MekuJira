@@ -40,13 +40,26 @@
     { key: "Sun", label: "日" },
   ];
 
+  const soundOptions: { value: string; label: string }[] = [
+    { value: "", label: "なし" },
+    { value: "default", label: "デフォルト" },
+    { value: "Ping", label: "Ping" },
+    { value: "Glass", label: "Glass" },
+    { value: "Submarine", label: "Submarine" },
+    { value: "Basso", label: "Basso" },
+    { value: "Hero", label: "Hero" },
+    { value: "Pop", label: "Pop" },
+  ];
+
   let newNotifTime = $state("09:00");
   let newNotifDays = $state<Weekday[]>(["Mon", "Tue", "Wed", "Thu", "Fri"]);
   let newNotifMessage = $state("");
+  let newNotifSound = $state("default");
   let editingNotifId = $state<string | null>(null);
   let editNotifTime = $state("");
   let editNotifDays = $state<Weekday[]>([]);
   let editNotifMessage = $state("");
+  let editNotifSound = $state("default");
   let notifTestResult = $state<"idle" | "sent" | "error">("idle");
 
   let editingFilterId = $state<string | null>(null);
@@ -209,7 +222,7 @@
     const id = `notif_${Date.now()}`;
     settings.notification_schedules = [
       ...settings.notification_schedules,
-      { id, enabled: true, time: newNotifTime, days: [...newNotifDays], message: newNotifMessage },
+      { id, enabled: true, time: newNotifTime, days: [...newNotifDays], message: newNotifMessage, sound: newNotifSound },
     ];
     if (isFirstSchedule) {
       await sendTestNotification();
@@ -217,6 +230,7 @@
     newNotifMessage = "";
     newNotifTime = "09:00";
     newNotifDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    newNotifSound = "default";
   }
 
   function removeNotifSchedule(id: string) {
@@ -236,6 +250,7 @@
     editNotifTime = s.time;
     editNotifDays = [...s.days];
     editNotifMessage = s.message;
+    editNotifSound = s.sound || "default";
   }
 
   function cancelNotifEdit() {
@@ -243,13 +258,14 @@
     editNotifTime = "";
     editNotifDays = [];
     editNotifMessage = "";
+    editNotifSound = "default";
   }
 
   function saveNotifEdit() {
     if (!editingNotifId || !editNotifMessage || editNotifDays.length === 0) return;
     settings.notification_schedules = settings.notification_schedules.map((s) =>
       s.id === editingNotifId
-        ? { ...s, time: editNotifTime, days: [...editNotifDays], message: editNotifMessage }
+        ? { ...s, time: editNotifTime, days: [...editNotifDays], message: editNotifMessage, sound: editNotifSound }
         : s,
     );
     cancelNotifEdit();
@@ -481,6 +497,11 @@
                   bind:value={editNotifMessage}
                   placeholder="メッセージ"
                 />
+                <select class="edit-input notif-sound-select" bind:value={editNotifSound}>
+                  {#each soundOptions as opt (opt.value)}
+                    <option value={opt.value}>{opt.label}</option>
+                  {/each}
+                </select>
                 <div class="edit-actions">
                   <button class="btn-edit-save" onclick={saveNotifEdit}>保存</button>
                   <button class="btn-edit-cancel" onclick={cancelNotifEdit}>キャンセル</button>
@@ -501,6 +522,7 @@
                     <span class="notif-time">{schedule.time}</span>
                   </span>
                   <span class="notif-message">{schedule.message}</span>
+                  <span class="notif-sound">{soundOptions.find(o => o.value === schedule.sound)?.label ?? schedule.sound}</span>
                 </div>
               </label>
               <button class="edit-btn" onclick={() => startNotifEdit(schedule.id)} title="編集">
@@ -534,6 +556,11 @@
       </div>
       <div class="notif-add-bottom">
         <input type="text" bind:value={newNotifMessage} placeholder="メッセージ" />
+        <select class="notif-sound-select" bind:value={newNotifSound}>
+          {#each soundOptions as opt (opt.value)}
+            <option value={opt.value}>{opt.label}</option>
+          {/each}
+        </select>
         <button class="btn-secondary" onclick={addNotifSchedule}>追加</button>
       </div>
     </div>
@@ -1012,6 +1039,20 @@
     font-size: 14px;
     color: var(--color-text-secondary);
     margin-top: 2px;
+  }
+  .notif-sound {
+    display: block;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    margin-top: 2px;
+  }
+  .notif-sound-select {
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
   }
   .notif-edit-row {
     display: flex;

@@ -30,6 +30,12 @@ pub struct NotificationSchedule {
     pub time: String,
     pub days: Vec<Weekday>,
     pub message: String,
+    #[serde(default = "default_sound")]
+    pub sound: String,
+}
+
+fn default_sound() -> String {
+    "default".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -34,6 +34,7 @@ export interface NotificationSchedule {
   time: string;
   days: Weekday[];
   message: string;
+  sound: string;
 }
 
 export interface AppSettings {
